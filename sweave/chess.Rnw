@@ -1,0 +1,292 @@
+%\documentclass[notitlepage]{article}
+\documentclass[10pt,a4paper,twoside]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[catalan]{babel}
+\usepackage[nottoc,numbib]{tocbibind}      % for bibliography in the table of contents
+\usepackage{hyperref}                      % link to website: \url{}.
+\usepackage[hang,footnotesize,bf]{caption} % customized caption
+\usepackage{authblk}                       % customized author and affiliation
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[left=2.5cm,top=3cm,bottom=3cm,right=2.5cm]{geometry}   % text margins
+\usepackage{booktabs}                      % for booktabs in print(xtable)) 
+\usepackage{unitsdef}                      % for typesetting units
+\usepackage{fancyhdr}                      % customized headers/footers
+\usepackage{enumitem}                      % customized enumerate lists
+\usepackage{cancel}                        % for cancelling a term
+\usepackage{bbm}
+\usepackage{xcolor, colortbl}
+\usepackage{mathtools}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={black!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
+
+\newcommand{\R}{\textsf{R }}
+\newcommand{\Rpackage}[1]{\textsf{#1}}
+\newcommand{\Robject}[1]{\texttt{#1}}
+\newcommand{\HRule}[1]{\rule{\linewidth}{#1}}
+\newcommand{\I}{\mathbbm{1}}
+%\newcommand\allbold[1]{{\boldmath\textbf{#1}}}
+\newcommand{\pvalue}{$p$-value }
+
+
+\def\Item#1\\{\item\allbold{#1}\\}          % set items of an enumerate or itemize list in bold 
+\let\origappendix\appendix                 % save the existing appendix command
+\renewcommand\appendix{\clearpage\pagenumbering{roman}\origappendix} % change format of appendix's number of page
+
+\definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
+
+<<include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center"
+)
+@
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Header and footer
+%%%
+%%%%%%%%%%%%%%%
+\pagestyle{fancy}
+\fancyhf{}
+\setlength\headheight{15pt}
+\fancyhead[L]{Modelització de Dades Complexes}
+\fancyhead[R]{PAC 1}
+\fancyfoot[R]{\thepage}
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Title page
+%%%
+%%%%%%%%%%%%%%%
+\begin{document}
+
+\title{\normalsize \textsc{Modelització de Dades Complexes}
+		\\ [2.0cm]
+		\HRule{0.5pt} \\
+		\LARGE \textbf{\uppercase{Anàlisi d'una Xarxa Bayesiana}\\ Final d'una partida d'escacs: rei-torre vs. rei-peó en a7}
+		\HRule{2pt} \\ [0.5cm]
+		\normalsize \today \vspace*{5\baselineskip}}
+
+\date{}
+
+\author[1]{Esther Amores Gago}
+\author[2]{Anna Costa Garrido}
+\author[3]{Oscar Ortiz Romero}
+
+\affil[1]{Applied Statistics Student -- Universitat Autònoma de Barcelona}
+
+\maketitle
+\thispagestyle{empty}
+
+\newpage
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Table of contents
+%%%
+%%%%%%%%%%%%%%%
+\clearpage
+\tableofcontents
+\clearpage
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Packages
+%%%
+%%%%%%%%%%%%%%%
+
+<<packages, warning=FALSE, message=FALSE, echo=FALSE>>=
+library(bnlearn)
+library(gRain)
+library(rchess)
+
+# OSCAR I ANNA: EXECUTEU AQUEST CODI 
+# devtools::install_github("jbkunst/rchess")
+# webshot::install_phantomjs()
+@
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Section: Introducció
+%%%
+%%%%%%%%%%%%%%%
+\section{Introducció}
+\label{sec:intro}
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subection: Els escacs
+%%%
+%%%%%%%%%%%%%%%
+\subsection{Els escacs}
+Els escacs és un dels jocs de taula més antics i populars, jugat per dos oponents que mouen 16 peces segons unes determinades regles fixes a través d'un tauler d'escacs i intenta fer escac i mat al rei de l'oponent \cite{chess}. Cada jugador té les peces d'un color, que pot ser blanc o negre, i disposa en iniciar la partida de totes les peces d'un d'aquests colors, que són un rei, una reina (o dama), dos alfils, dos cavalls, dues torres i vuit peons disposades tal i com mostra la Figura \ref{fig:chss}.
+
+\begin{figure}[ht!]
+     \begin{center}
+<<echo=FALSE>>=
+chss <- Chess$new()
+plot(chss)
+@
+     \caption{Diagrama d'escacs. Tauler d'escacs amb les peces col·locades inicialment}
+     \label{fig:chss}
+     \end{center}
+\end{figure}
+
+
+Tradicionalment es considera que si el valor d'un peó com a unitat comparativa és d'un punt, cada alfil i cada cavall en valen tres, cada torre cinc i la reina deu. Inicia la partida el jugador que té les peces blanques, i els dos jugadors van movent alternativament les pròpies peces, una cada vegada, intentant de matar el nombre més gran possible de les del contrari o bé d’aconseguir una posició dominant i que el rei d’aquest resti indefens. Si no pot fer escac i mat cap dels jugadors, la partida acaba en taules \cite{enciclopedia}.
+
+En una partida d'escacs existeixen tres fases: l'obertura, on els jugadors despleguen les seves peces en posicions útils per al joc; el joc mitjà, on les peces ja estan desplegades, es lluita per cada casella i els jugadors fan plans d'atac i de defensa; i el final, on la majoria de les peces estan fóra el tauler, els reis adopten un paper més actiu en la lluita i la promoció (o coronació) d'un peó és un factor decisiu \cite{fases}.
+
+Així doncs, la partida finalitza quan un dels jugadors fa escac i mat i guanya, o bé quan els jugadors empaten (fan taules). Els finals en escacs es classifiquen d'acord amb el tipus de peces i la quantitat de peces que queden al tauler \cite{final}. 
+
+Per entendre les variables de la base de dades, cal tenir en compte els elements bàsics del tauler d'escacs \cite{escacs}:
+\begin{description}
+    \item[Fila] Cadascuna de les vuit línies de vuit caselles que es numeren de l'1 al 8, començant des de la primera fila pel que fa al bàndol de les peces blanques.
+    \item[Columna] Cadascuna de les vuit línies de vuit caselles que s'anomenen amb lletres minúscules de la (a) a la (h), començant des de la primera columna esquerra pel que fa al bàndol de les peces blanques.
+    \item[Diagonal] Cadascuna de les 16 línies que es formen agrupant les caselles diagonalment. Les dues grans diagonals (a1-h8 o bé h1-a8) tenen vuit caselles.
+    \item[Centre] El centre del tauler són les quatre caselles centrals.
+    \item[Cantonades] Cadascuna de les quatre caselles situades a les cantonades del tauler.
+    \item[Vores] Les dues columnes (a i h) i dues files (1 i 8) situades als extrems del tauler.
+\end{description}
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subection: Base de dades
+%%%
+%%%%%%%%%%%%%%%
+\subsection{Base de dades}
+En aquest treball s'utilitza una base de dades que consisteix en 3196 jugades d'un tipus de final concret: torre i rei contra rei i peó. En aquest cas, torre i rei negres contra rei i peó blancs, on el peó blanc està en la posició del tauler a7 (veure Figura \ref{fig:chss2}). És el torn de les blanques.
+
+\begin{figure}[ht!]
+     \begin{center}
+<<echo=FALSE>>=
+# https://www.apronus.com/chess/diagram/editor/
+chss2 <- Chess$new("8/P7/8/1k6/5r2/8/K7/8 w - - 0 1")
+plot(chss2)
+@
+     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
+     \label{fig:chss2}
+     \end{center}
+\end{figure}
+
+
+A continuació s'hi troben de manera detallada cadascuna de les variables de la base de dades:
+
+\begin{description}
+    \item[bkblk]
+    \item[bknwy]
+    \item[bkon8]
+    \item[bkona]
+    \item[bkspr]
+    \item[bkxbq]
+    \item[bkxcr]
+    \item[bkxwp]
+    \item[blxwp]
+    \item[bxqsq]
+    \item[cntxt]
+    \item[dsopp]
+    \item[dwipd]
+    \item[hdchk]
+    \item[katri]
+    \item[mulch]
+    \item[qxmsq]
+    \item[r2ar8]
+    \item[reskd]
+    \item[reskr]
+    \item[rimmx]
+    \item[rkxwp]
+    \item[rxmsq]
+    \item[simpl]
+    \item[skach]
+    \item[skewr]
+    \item[skrxp]
+    \item[spcop]
+    \item[stlmt]
+    \item[thrsk]
+    \item[wkcti]
+    \item[wkna8]
+    \item[wknck]
+    \item[wkovl]
+    \item[wkpos]
+    \item[wtoeg]
+    \item[win]
+\end{description}
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subsection: Software
+%%%
+%%%%%%%%%%%%%%%
+\subsection{Software}
+Els paquets que s'utilitzaran són els següents:
+
+<<>>=
+<<packages>>
+@
+
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Section: Explicació de les variables
+%%%
+%%%%%%%%%%%%%%%
+\section{Explicació de les variables}
+\label{sec:variables}
+
+Aquesta base de dades de l'any 1989 té un total de 3196 registres i 36 variables, no té cap valor perdut (\textit{missing}), i ha estat extreta del portal \textit{UCI Machine Learning Repository} \cite{database}. Les dades van ser originalment generades i descrites per Alen Shapiro, i el format del dataset va ser modificat el 1990 per tal que coincidís amb el format de la resta de bases de dades del repositori UCI.
+
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% References
+%%%
+%%%%%%%%%%%%%%%
+\begin{thebibliography}{99}
+   \bibitem{rchess} rchess \textit{A Chess package for \R.} \url{http://jkunst.com/rchess/} [Online; visitat el 27 de març de 2021]
+   \bibitem{chess} chess \textit{Definition of chess.} \url{https://www.merriam-webster.com/dictionary/chess} [Online; visitat el 27 de març de 2021]
+   \bibitem{enciclopedia} escacs \textit{Escacs} \url{https://www.enciclopedia.cat/ec-gec-0153105.xml} [Online; visitat el 27 de març de 2021]
+   \bibitem{fases} \textit{Fases de la partida.} \url{https://www.123ajedrez.com/la-partida-de-ajedrez/fases-de-la-partida} [Online; visitat el 27 de març de 2021]
+   \bibitem{final} Final (escacs) \textit{Finals contra rei i peó.} \url{https://ca.wikipedia.org/wiki/Final_(escacs)} [Online; visitat el 27 de març de 2021]
+    \bibitem{escacs} Escacs \textit{L'escaquer.} \url{https://ca.wikipedia.org/wiki/Escacs} [Online; visitat el 27 de març de 2021]
+    \bibitem{database} Base de dades \textit{Chess (King-Rook vs. King-Pawn) Data Set.} \url{https://archive.ics.uci.edu/ml/datasets/Chess+\%28King-Rook+vs.+King-Pawn\%29} [Online; visitat el 27 de març de 2021]
+\end{thebibliography} 
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Appendix
+%%%
+%%%%%%%%%%%%%%%
+\clearpage
+\appendix
+\section{\R code}
+\label{app:Rcode}
+
+
+<<echo=TRUE, eval=FALSE>>=
+
+
+@
+
+
+
+
+\end{document}
