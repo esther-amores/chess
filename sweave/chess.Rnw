@@ -111,6 +111,10 @@ opts_chunk$set(
 library(bnlearn)
 library(gRain)
 library(rchess)
+library(Rgraphviz)
+library(tidyverse)
+library(MASS) # per realitzar el stepwise
+library(readr)
 
 # OSCAR I ANNA: EXECUTEU AQUEST CODI 
 # devtools::install_github("jbkunst/rchess")
@@ -282,6 +286,128 @@ Aquesta base de dades de l'any 1989 té un total de 3196 registres i 36 variable
 
 
 <<echo=TRUE, eval=FALSE>>=
+#### Importar les dades: ####
+dades <- read_csv("kr-vs-kp.data", 
+                     col_names = c("bkblk","bknwy","bkon8","bkona","bkspr",
+                                   "bkxbq","bkxcr","bkxwp","blxwp","bxqsq",
+                                   "cntxt","dsopp","dwipd","hdchk","katri",
+                                   "mulch","qxmsq","r2ar8","reskd","reskr",
+                                   "rimmx","rkxwp","rxmsq","simpl","skach",
+                                   "skewr","skrxp","spcop","stlmt","thrsk",
+                                   "wkcti","wkna8","wknck","wkovl","wkpos",
+                                   "wtoeg", "target"))
+
+
+
+# Passar a factor totes les variables
+dades <- lapply(dades, factor) %>%
+  as.data.frame()
+
+str(dades)
+apply(dades, 2, table)
+
+#### Preprocessing de les dades: ####
+model <- glm(target ~ ., data = dades, family = "binomial")
+stepwise <- stepAIC(model, direction = "both")
+# el millor model escollit després de fer el mètode Stepwise segons valor del AIC
+# treu les variables: stlmt, reskd, skewr, bkspr, simpl, wtoeg, dwipd, spcop
+
+
+# Les variables escollides les guardem en aquest nou objecte:
+dades.step <- stepwise$model
+
+
+#### 1er: Aprendre l'estructura de les dades (amb totes les variables) ####
+
+# - Introduim la black i white list:
+atributes <- colnames(dades[-ncol(dades)])
+  
+wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
+bl <- rbind(
+  expand.grid(atributes, atributes),
+  data.frame(Var1 = atributes, Var2= rep("target", length(atributes))),
+  data.frame(Var1 = "target", Var2= "target")
+)
+
+# - Fem el k-fold cross validation:
+
+kfold <- function(k, seed = NULL){
+  if(!is.null(seed)) set.seed(seed)
+  trainingset <- list()
+  testset <- list()
+  
+    for(i in 1:k){
+    dades$id <- sample(1:k, nrow(dades), replace = TRUE)
+    folds <- 1:k
+  
+    trainingset[[i]] <- subset(dades, id %in% folds[-i])
+    testset[[i]] <- subset(dades, id %in% c(i))
+    }
+  
+  return(list(training = trainingset, test = testset))
+}
+
+# Generem la llista amb tots els folds i treiem la columna dels id's
+# tant pels trainings com pels tests
+training <- kfold(5, 666)$training %>%
+  lapply(function(x) x[,-ncol(x)])
+
+test <- kfold(5, 666)$test %>%
+  lapply(function(x) x[,-ncol(x)])
+
+
+# - Aprendre l'estructura de les dades per tots els possibles folds
+
+xarxa <- lapply(training, function(x) hc(x, score = "bic", whitelist = wl, 
+                                         blacklist = bl))
+
+# Fem el plot per cada fold
+lapply(xarxa, graphviz.plot)
+
+
+#### 2on: Estimem els paràmetres de la xarxa, pel mètode MLE ####
+xarxa.estimada <- list()
+for(i in 1:5)
+  xarxa.estimada[[i]] <- bn.fit(xarxa[[i]], training [[i]], method = "mle")
+
+#### 3er: Fem la validació , estimar la classe per tots els conjunts tests ####
+# passem la xarxa a format gRain
+xarxa.grain <- lapply(xarxa.estimada, function(x) suppressWarnings(as.grain(x)))
+
+distribucio <- NULL
+prediccio <- NULL
+CL <- NULL
+
+for(i in 1:5){
+  distribucio[[i]] <- list()
+  prediccio[[i]] <- list()
+  CL[[i]] <- list()
+  for(j in 1:nrow(test[[i]])){
+    if(is.numeric(predict(xarxa.grain[[i]], response="target",test[[i]][j,],predictors=atributes,type="dist")$pred[[1]][1,1])==FALSE)
+    {prediccio[[i]][[j]]<-NA
+    CL[[i]][[j]]<-0
+    distribucio[[i]][[j]]<-c(rep(0,2))
+    }
+    else
+    {
+    distribucio[[i]][[j]] <- list(predict(xarxa.grain[[i]],response="target",
+                                     test[[i]][j,],predictors=atributes,type="dist")$pred[[1]][1,])
+    prediccio[[i]][[j]]<-names(distribucio[[i]][[j]][[1]])[which.max(distribucio[[i]][[j]][[1]])]
+    CL[[i]][[j]]<-max(distribucio[[i]][[j]][[1]])
+    }
+  }
+  }
+
+#### 4t: Càlcul de la matriu de confusió i les mesures d'avaluació ####
+matriu.confusio <- list()
+for(i in 1:5){
+  matriu.confusio[[i]] <- as.matrix(table(unlist(prediccio[[i]]), test[[i]]$target))
+}
+
+
+accuracy <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
+accuracy <- unlist(accuracy)
+
 
 
 @
