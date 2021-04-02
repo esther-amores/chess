@@ -116,7 +116,7 @@ library(tidyverse)
 library(MASS) # per realitzar el stepwise
 library(readr)
 
-# OSCAR I ANNA: EXECUTEU AQUEST CODI 
+# OSCAR I ANNA: EXECUTEU AQUEST CODI PER A QUE NO US DONI PROBLEMES COMPILAR EL .Rnw
 # devtools::install_github("jbkunst/rchess")
 # webshot::install_phantomjs()
 @
@@ -174,7 +174,9 @@ Per entendre les variables de la base de dades, cal tenir en compte els elements
 %%%
 %%%%%%%%%%%%%%%
 \subsection{Base de dades}
-En aquest treball s'utilitza una base de dades que consisteix en 3196 jugades d'un tipus de final concret: torre i rei contra rei i peó. En aquest cas, torre i rei negres contra rei i peó blancs, on el peó blanc està en la posició del tauler a7 (veure Figura \ref{fig:chss2}). És el torn de les blanques.
+En aquest treball s'utilitza una base de dades de l'any 1989 que té un total de 3196 registres i 36 variables, no té cap valor perdut (\textit{missing}), i ha estat extreta del portal \textit{UCI Machine Learning Repository} \cite{database}. Les dades van ser originalment generades i descrites per Alen Shapiro, i el format del dataset va ser modificat el 1990 per tal que coincidís amb el format de la resta de bases de dades del repositori UCI.
+
+Per tant, cadascun d'aquests registres representa, de les 3196 posicions de partides registrades, un tipus de final concret: torre i rei contra rei i peó. En aquest cas, torre i rei negres contra rei i peó blancs, on el peó blanc està en la posició del tauler a7 (veure Figura \ref{fig:chss2}). És el torn de les blanques. Cada variable pren 2 valors: vertader (TRUE) o fals (FALSE).
 
 \begin{figure}[ht!]
      \begin{center}
@@ -192,44 +194,48 @@ plot(chss2)
 A continuació s'hi troben de manera detallada cadascuna de les variables de la base de dades:
 
 \begin{description}
-    \item[bkblk]
-    \item[bknwy]
-    \item[bkon8]
-    \item[bkona]
-    \item[bkspr]
-    \item[bkxbq]
-    \item[bkxcr]
-    \item[bkxwp]
-    \item[blxwp]
-    \item[bxqsq]
-    \item[cntxt]
-    \item[dsopp]
-    \item[dwipd]
-    \item[hdchk]
-    \item[katri]
-    \item[mulch]
-    \item[qxmsq]
-    \item[r2ar8]
-    \item[reskd]
-    \item[reskr]
-    \item[rimmx]
-    \item[rkxwp]
-    \item[rxmsq]
-    \item[simpl]
-    \item[skach]
-    \item[skewr]
-    \item[skrxp]
-    \item[spcop]
-    \item[stlmt]
-    \item[thrsk]
-    \item[wkcti]
-    \item[wkna8]
-    \item[wknck]
-    \item[wkovl]
-    \item[wkpos]
-    \item[wtoeg]
-    \item[win]
+    \item[bkblk]el rei negre no està en el camí de les peces blanques
+    \item[bknwy]el rei no molesta en cap moviment de la torre negra (black rook)
+    \item[bkon8]el rei negre està a la fila 8 per ajudar a la torre negra
+    \item[bkona]el rei negre està a la columna A per ajudar a la torre negra
+    \item[bkspr]el rei negre pot ajudar a la torre negre amb 1 moviment
+    \item[bkxbq]el rei negre no està atacat de cap manera pel peó coronat
+    \item[bkxcr]el rei negre pot atacar la cuadrícula crítica al voltant de b7 
+    \item[bkxwp]el rei negre pot atacar el peó blanc
+    \item[blxwp]negres ataquen al peó blanc (torre negre només pot en direcció x=-1, és a dir, cap a f7)
+    \item[bxqsq]una o més peces negres (és a dir, o el rei o la torre) controlen el quadrat de la coronació
+    \item[cntxt]el rei blanc està a una cantonada i no en a8
+    \item[dsopp]els reis es troben en oposició: es troben cara a cara en una fila o columna, amb només una casella entre ells
+    \item[dwipd]la distància del rei blanc al punt d'intersecció f4 és molt gran
+    \item[hdchk]es fa escac a la descoberta, és a dir, és l'escac que fa una peça en moure's una altra peça del mateix bàndol que n'obstaculitzava l'acció.
+    \item[katri]el rei negre controla el punt d'intersecció f4
+    \item[mulch]les peces negres poden tornar a fer escac per guanyar avantatge
+    \item[qxmsq]la casella d'escac i mat és atacada d'alguna manera pel peó blanc coronat
+    \item[r2ar8]la torre negra no té accés a la fila 8 o a la columna A
+    \item[reskd]el rei blanc pot ser atacat doblement  
+    \item[reskr]la torre negra en a4 faria una amenaça doble
+    \item[rimmx]la torre negra pot ser capturada de forma segura
+    \item[rkxwp]si la torre negra es mou a f7, amenaça al peó blanc
+    \item[rxmsq]la torre negra pot atacar de forma segura la casella per fer escac i mat
+    \item[simpl]hi aplica un patró molt simple perquè el peó blanc avança i corona (es converteix en una dama), aleshores la torre negra fa escac en a4 i, per tant, blanques estan forçades a menjar la torre amb la dama blanca 
+    \item[skach]es pot fer 1 o més escacs al rei blanc per sacrificar el peó
+    \item[skewr]hi ha una clavada potencial fent un atac doble: el peó blanc es corona i la torre negra mou a a4
+    \item[skrxp]la torre negra pot aconseguir un atac doble o el rei negre pot atacar el peó blanc
+    \item[spcop]hi ha una oposició especial entre dos reis
+    \item[stlmt]el rei blanc és ofegat, és a dir: no té jugades legals per realitzar i el rei no es troba en estat d'escac. La partida acaba en taules
+    \item[thrsk]fer escac a la descoberta (una peça qu eestà interferint l'acció d'una segona, s'aparta del seu camí) fent un doble atac
+    \item[wkcti]el rei blanc no pot controlar el punt d'intersecció f4
+    \item[wkna8]el rei blanc està a la casella a8
+    \item[wknck]el rei blanc està en escac
+    \item[wkovl]el rei blanc està sobrecarregat, és a dir: el rei blanc pot defensar una de les dues peces que estan sent amenaçades, per tant, sacrifica l'altre peça
+    \item[wkpos]el rei blanc està en una potencial posició de rebre un atac doble
+    \item[wtoeg]el rei blanc està a una casella de la cantonada
+    \item[win] blanques guanyen
 \end{description}
+
+La distribució que pren la variable \textsc{win} està balançejada, és a dir: en 1669 posicions (52\%) les blanques guanyen, mentre que en 1527 posiicions (48\%) les blanques no guanyen.
+
+
 
 
 %%%%%%%%%%%%%%%
@@ -245,16 +251,35 @@ Els paquets que s'utilitzaran són els següents:
 @
 
 
+%%%%%%%%%%%%%%%
+%%%
+%%% Section: Construcció d'un classificador Bayesià
+%%%
+%%%%%%%%%%%%%%%
+\section{Construcció d'un classificador Bayesià}
+\label{sec:bayesian}
+
+
 
 %%%%%%%%%%%%%%%
 %%%
-%%% Section: Explicació de les variables
+%%% Subsection: Preprocessament de les dades
 %%%
 %%%%%%%%%%%%%%%
-\section{Explicació de les variables}
-\label{sec:variables}
+\subsection{Preprocessament de les dades}
+\label{sec:preprocessing}
 
-Aquesta base de dades de l'any 1989 té un total de 3196 registres i 36 variables, no té cap valor perdut (\textit{missing}), i ha estat extreta del portal \textit{UCI Machine Learning Repository} \cite{database}. Les dades van ser originalment generades i descrites per Alen Shapiro, i el format del dataset va ser modificat el 1990 per tal que coincidís amb el format de la resta de bases de dades del repositori UCI.
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subsection: Validació del model
+%%%
+%%%%%%%%%%%%%%%
+\subsection{Validació del model}
+\label{sec:validation}
+
+
 
 
 
@@ -370,7 +395,7 @@ xarxa.estimada <- list()
 for(i in 1:5)
   xarxa.estimada[[i]] <- bn.fit(xarxa[[i]], training [[i]], method = "mle")
 
-#### 3er: Fem la validació , estimar la classe per tots els conjunts tests ####
+#### 3er: Fem la validació, estimar la classe per tots els conjunts tests ####
 # passem la xarxa a format gRain
 xarxa.grain <- lapply(xarxa.estimada, function(x) suppressWarnings(as.grain(x)))
 
@@ -391,7 +416,7 @@ for(i in 1:5){
     else
     {
     distribucio[[i]][[j]] <- list(predict(xarxa.grain[[i]],response="target",
-                                     test[[i]][j,],predictors=atributes,type="dist")$pred[[1]][1,])
+                                          test[[i]][j,],predictors=atributes,type="dist")$pred[[1]][1,])
     prediccio[[i]][[j]]<-names(distribucio[[i]][[j]][[1]])[which.max(distribucio[[i]][[j]][[1]])]
     CL[[i]][[j]]<-max(distribucio[[i]][[j]][[1]])
     }

@@ -1,4 +1,4 @@
-1	bkblk	the BK is not in the way: 
+1	bkblk	the BK is not in the way: el rei negre no està en el camí de les peces blanques
 2	bknwy	the BK is not in the BR's way: el rei no molesta en cap moviment de la torre negra (black rook)
 3	bkon8	the BK is on rank 8 in a position to aid the BR: el rei negre està a la fila 8 per ajudar a la torre negra
 4	bkona	the BK is on file A in a position to aid the BR: el rei negre està a la columna A per ajudar a la torre negra
@@ -9,28 +9,34 @@
 9	blxwp	B attacks the WP (BR in direction x = -1 only): negres ataquen al peó blanc (torre negre només pot en direcció x=-1)
 10	bxqsq	one or more Black pieces control the queening square: una o més peces negres (és a dir, o el rei o la torre) controlen el quadrat de la coronació
 11	cntxt	the WK is on an edge and not on a8: el rei blanc està a una cantonada i no en a8
-12	dsopp	the kings are in normal opposition: oposició (o oposició directa) és la situació que es produeix quan els dos reis es troben cara a cara en una fila o columna, amb només una casella entre ells. 
-13	dwipd	the WK distance to intersect point is too great
+12	dsopp	the kings are in normal opposition: els reis es troben en oposició: es troben cara a cara en una fila o columna, amb només una casella entre ells 
+13	dwipd	the WK distance to intersect point is too great: la distància del rei blanc al punt d'intersecció f4 és molt gran
 14	hdchk	there is a good delay because there is a hidden check: es fa escac a la descoberta, és a dir, és l'escac que fa una peça en moure's una altra peça del mateix bàndol que n'obstaculitzava l'acció.
-15	katri	the BK controls the intersect point: això significa que el rei negre controla el punt d'intersecció
-16	mulch	B can renew the check to good advantage: negres poden tornar a fer escac per guanyar avantatge
+15	katri	the BK controls the intersect point: el rei negre controla el punt d'intersecció f4
+16	mulch	B can renew the check to good advantage: les peces negres poden tornar a fer escac per guanyar avantatge
 17	qxmsq	the mating square is attacked in some way by the promoted WP: la casella d'escac i mat és atacada d'alguna manera pel peó blanc coronat
 18	r2ar8	the BR does not have safe access to file A or rank 8: la torre negra no té accés a la fila 8 o a la columna A
-19	reskd	the WK can be reskewered via a delayed skewer (preguntar a Javier)
-20	reskr	the BR alone can renew the skewer threat (preguntar a Javier)
+19	reskd	the WK can be reskewered via a delayed skewer: (inventar) el rei blanc pot ser atacat doblement  
+20	reskr	the BR alone can renew the skewer threat: la torre negra en a4 faria una amenaça doble
 21	rimmx	the BR can be captured safely: la torre negra pot ser capturada de forma segura
-22	rkxwp	the BR bears on the WP (direction x = -1 only): la torre negra (preguntar a Javier)
-23	rxmsq	the BR attacks a mating square safely: la torre negra pot atacar de forma segua la casella per fer escac i mat
-24	simpl	a very simple pattern applies: aplica un patró molt simple (preguntar a Javier)
+22	rkxwp	the BR bears on the WP (direction x = -1 only): si la torre negra es mou a f7, amenaça al peó blanc
+23	rxmsq	the BR attacks a mating square safely: la torre negra pot atacar de forma segura la casella per fer escac i mat
+24	simpl	a very simple pattern applies: hi aplica un patró molt simple perquè el peó blanc avança i corona (es converteix en una dama), aleshores la torre negra fa escac en a4 i, per tant, blanques estan forçades a menjar la torre amb la dama blanca 
 25	skach	the WK can be skewered after one or more checks: es pot fer 1 o més escacs al rei blanc per sacrificar el peó
-26	skewr	there is a potential skewer as opposed to fork: (preguntar a Javier) --> se puede hacer un tenedor de un rei a una torre + rei?
-27	skrxp	the BR can achieve a skewer or the BK attacks the WP: la torre negra pot aconseguir un pintzo o el rei negre pot atacar el peó blanc
+26	skewr	there is a potential skewer as opposed to fork: hi ha una clavada potencial fent una forquilla (atac doble). El peó blanc es corona i la torre negra mou a a4.
+
+##
+se puede hacer un tenedor de un rey a una torre + rei? NO. el rey no puede hacer eso
+##
+
+
+27	skrxp	the BR can achieve a skewer or the BK attacks the WP: la torre negra pot aconseguir un pintxo (atac doble) o el rei negre pot atacar el peó blanc
 28	spcop	there is a special opposition pattern present: hi ha una oposició especial entre dos reis
 29	stlmt	the WK is in stalemate: el rei blanc és ofegat
 30	thrsk	there is a skewer threat lurking: fer escac a la descoberta fent un pintxo
 31	wkcti	the WK cannot control the intersect point: el rei blanc no pot controlar el punt d'intersecció
 32	wkna8	the WK is on square a8: el rei blanc està a la casella a8
 33	wknck	the WK is in check: el rei blanc està en escac
-34	wkovl	the WK is overloaded: el rei blanc està sobrecarregat, és a dir: defensa a dos peces (preguntar a Javier)
+34	wkovl	the WK is overloaded: el rei blanc està sobrecarregat, és a dir: el rei blanc pot defensar una de les dues peces que estan sent amenaçades, per tant, sacrifica a l'altre peça
 35	wkpos	the WK is in a potential skewer position: el rei blanc està en una potencial posició de pintxo
-36	wtoeg	the WK is one away from the relevant edge: el rei blanc està a una posició de la cantonada
+36	wtoeg	the WK is one away from the relevant edge: el rei blanc està a una casella de la cantonada
