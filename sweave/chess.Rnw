@@ -70,6 +70,7 @@ opts_chunk$set(
 %%%
 %%%%%%%%%%%%%%%
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \title{\normalsize \textsc{Modelització de Dades Complexes}
 		\\ [2.0cm]
@@ -193,7 +194,7 @@ plot(chss2)
 \end{figure}
 
 
-A continuació s'hi troben de manera detallada cadascuna de les variables de la base de dades:
+A continuació s'hi troben de manera detallada cadascuna de les variables de la base de dades, explicades a partir d'un expemple (veure Figura \ref{fig:chss2}):
 
 \begin{description}
     \item[bkblk]el rei negre no està en el camí de les peces blanques
@@ -461,26 +462,26 @@ for(i in 1:5)
   matriu.confusio[[i]] <- as.matrix(table(unlist(prediccio[[i]]), test[[i]]$target))
 
 # Accuracy
-accuracy <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
-accuracy <- unlist(accuracy)
+accuracy_NB <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
+accuracy_NB <- unlist(accuracy_NB)
 
 # True Positive Rate
-TPR <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[2,1]))*100,2))
-TPR <- unlist(TPR)
+TPR_NB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[2,1]))*100,2))
+TPR_NB <- unlist(TPR_NB)
 
 # True Negative Rate
-TNR <- lapply(matriu.confusio, function(x) round((sum(x[2,2])/sum(x[2,2] + x[1,2]))*100,2))
-TNR <- unlist(TNR)
+TNR_NB <- lapply(matriu.confusio, function(x) round((sum(x[2,2])/sum(x[2,2] + x[1,2]))*100,2))
+TNR_NB <- unlist(TNR_NB)
 
 # Balanced Accuracy
-baccuracy <- (TPR+TNR)/2
+baccuracy_NB <- (TPR_NB+TNR_NB)/2
 
 # Positive Predictive Value
-PPV <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[1,2]))*100,2))
-PPV <- unlist(PPV)
+PPV_NB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[1,2]))*100,2))
+PPV_NB <- unlist(PPV_NB)
 
 # F1 score
-F1 <- 2*((PPV*TPR)/(PPV+TPR))
+F1_NB <- 2*((PPV_NB*TPR_NB)/(PPV_NB+TPR_NB))
 
 @
 
@@ -519,9 +520,7 @@ F1 <- 2*((PPV*TPR)/(PPV+TPR))
 \subsubsection{Aprenentatge d'estructura}
 \label{sec:augmented_structure}
 
-Ara que ja hem fet el preprocessament de les dades, hem d'aprendre l'estructura de la xarxa mitjançant el mètode heurístic de \textit{Search-and-score}. Aquest mètode utilitza una funció de puntuació i l'algoritme intenta trobar l'estructura que la maximitzi, per això farem servir la funció \texttt{hc} de la llibreria \textbf{\texttt{bnlearn}}. En aquest cas, el nostre dataset conté només dades completes, com bé hem dit abans. 
-
-Com volem que el classificador bayesià sigui un Augmented Naive Bayes, introduïrem una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) cap a tota la resta de variables explicatives, però en aquest cas no afegirem una \textit{black list} perquè no ens cal evitar que les variables explicatives tinguin fletxes entre elles. 
+Volem que el classificador bayesià sigui un Augmented Naive Bayes, per fer aixó introduïrem una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) cap a tota la resta de variables explicatives, però en aquest cas no afegirem una \textit{black list} perquè no ens cal evitar que les variables explicatives tinguin fletxes entre elles. 
 
 <<augmented_structure, results='hide'>>=
 #### 1er: Aprendre l'estructura de les dades (amb totes les variables) ####
@@ -637,26 +636,26 @@ for(i in 1:5)
   matriu.confusio[[i]] <- as.matrix(table(unlist(prediccio[[i]]), test[[i]]$target))
 
 # Accuracy
-accuracy <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
-accuracy <- unlist(accuracy)
+accuracy_ANB <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
+accuracy_ANB <- unlist(accuracy_ANB)
 
 # True Positive Rate
-TPR <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[2,1]))*100,2))
-TPR <- unlist(TPR)
+TPR_ANB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[2,1]))*100,2))
+TPR_ANB <- unlist(TPR_ANB)
 
 # True Negative Rate
-TNR <- lapply(matriu.confusio, function(x) round((sum(x[2,2])/sum(x[2,2] + x[1,2]))*100,2))
-TNR <- unlist(TNR)
+TNR_ANB <- lapply(matriu.confusio, function(x) round((sum(x[2,2])/sum(x[2,2] + x[1,2]))*100,2))
+TNR_ANB <- unlist(TNR_ANB)
 
 # Balanced Accuracy
-baccuracy <- (TPR+TNR)/2
+baccuracy_ANB <- (TPR_ANB+TNR_ANB)/2
 
 # Positive Predictive Value
-PPV <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[1,2]))*100,2))
-PPV <- unlist(PPV)
+PPV_ANB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[1,2]))*100,2))
+PPV_ANB <- unlist(PPV_ANB)
 
 # F1 score
-F1 <- 2*((PPV*TPR)/(PPV+TPR))
+F1_ANB <- 2*((PPV_ANB*TPR_ANB)/(PPV_ANB+TPR_ANB))
 
 @
 
@@ -669,6 +668,236 @@ F1 <- 2*((PPV*TPR)/(PPV+TPR))
 \subsubsection{Validació del model}
 \label{sec:augmented_validation}
 
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subsection: Triatge del clasificador bayesiá final
+%%%
+%%%%%%%%%%%%%%%
+\subsection{\textit{Triatge del calsificador bayesiá final}}
+\label{sec:triatge_clasificador}
+
+Una vegada ja tenim el dos clasificador bayesians "Naive Bayes" i "Augmented Naive Bayes" hem de triar quina de les dues xarxes modelitza millor les nostres dades d'escacs, i aixó o podem fer a partir de les mesures de bondat d'ajust de cadascuna de les xarxes.
+
+<<triatge, results="hide">>=
+Accuracy <- rbind(accuracy_NB,accuracy_ANB)
+colnames(Accuracy) <- paste0(1:5,"-fold")
+Accuracy
+
+TPR <- rbind(TPR_NB,TPR_ANB)
+colnames(TPR) <- paste0(1:5,"-fold")
+TPR
+
+TNR <- rbind(TNR_NB,TNR_ANB)
+colnames(TNR) <- paste0(1:5,"-fold")
+TNR
+
+PPV <- rbind(PPV_NB,PPV_ANB)
+colnames(PPV) <- paste0(1:5,"-fold")
+PPV
+
+F1 <- rbind(F1_NB, F1_ANB)
+colnames(F1) <- paste(1:5, "-fold")
+F1
+
+(Accuracy <- apply(Accuracy, 1, FUN=mean))
+(TPR <- apply(TPR, 1, FUN=mean))
+(TNR <- apply(TNR, 1, FUN=mean))
+(PPV <- apply(PPV, 1, FUN=mean))
+#Hacer tabla con las mesures.
+@
+
+
+Veiem que totes les mesures (accuracy, TPR, TNR, PPV, F1) que hem calculat per saber com de bé estima les xarxes bayesianes, les del "Augmented Naive Bayes" són més elevades (>95 \%) que les del "Naive Bayes" y per tant triem el model de Augmented Naive Bayes per modelar de nou pero ara amb tota la base de dades training sense fer k-fold ja que ara farem servir split-validation per poder validar el model, dividim la base de dades, a l'atzar, en dos trossos, training (80\%), amb el qual aprendrem la xarxa, i validate (20\%).
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subsubsection: Aprenentatge d'estructura final
+%%%
+%%%%%%%%%%%%%%%
+\subsubsection{Aprenentatge d'estructura final}
+\label{sec:augmented_structure_final}
+
+Com finalment la xarxa ha de ser un Augmented Naive Bayes, tornarem ha generar una \textit{white list} per forçar tot els arcs de la variable clase (\textbf{target}) p a la resta de variables, pero sense una \textit{black list} per que el model pugui crear arcs entre les variables explicatives.
+
+<<final_structure, results="hide">>=
+atributes <- colnames(dades[-ncol(dades)])
+
+wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
+
+splitdf <- function(dataframe, seed = NULL){
+  if(!is.null(seed)) set.seed(seed)
+  index <- 1:nrow(dataframe)
+  trainingindex <- sample(index,length(index)*0.8)
+  trainingset <- dataframe[trainingindex, ]
+  validateset <- dataframe[-trainingindex, ]
+  list(trainingset = trainingset, validateset = validateset)
+}
+
+splits <- splitdf(dades, seed = 666)
+# ens dona una llista: dos data frames anomenats "training" i "validate"
+# Nombre d'observacions en cada subconjunt de dades:
+lapply(splits, nrow)
+
+xarxa <- hc(splits$trainingset, score = "bic", whitelist = wl)
+@
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subsubsection: Aprenentatge de paràmetres finals
+%%%
+%%%%%%%%%%%%%%%
+\subsubsection{Aprenentatge de paràmetres finals}
+\label{sec:augmented_parameters_final}
+
+Ara que ja tenim l'estructura de les dades donada, estimarem els paràmetres mitjançant la base de dades per a cadascuna de les variables. 
+
+<<final_parameters, results="hide">>=
+xarxa.estimada <- bn.fit(xarxa, splits$trainingset, method = "mle")
+xarxa.grain <- suppressWarnings(as.grain(xarxa.estimada))
+
+prediccio <- NULL
+CL <- NULL
+prueba <- NULL
+distribucio <- NULL
+
+for (j in 1:nrow(splits$validateset)){
+  if (is.numeric(predict(xarxa.grain, response="target", 
+                         splits$validateset[j,], predictors = atributes,
+                         type = "dist")$pred[[1]][1,1])==FALSE){
+    prediccio[[j]] <- NA
+    CL[[j]] <- 0
+    distribucio[[j]] <- c(rep(0,2))
+  }
+  else{
+    prueba[[j]] <- predict(xarxa.grain, response="target", 
+                           splits$validateset[j,], predictors = atributes, 
+                           type="dist")
+    distribucio[[j]] <- prueba[[j]]$pred[[1]]
+    prediccio[[j]] <- dimnames(distribucio[[j]])[[2]][which.max(distribucio[[j]])]
+    CL[[j]] <- max(distribucio[[j]])
+  }
+}
+@
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subsubsection: Classificació Bayesiana final
+%%%
+%%%%%%%%%%%%%%%
+\subsubsection{Classificació Bayesiana final}
+\label{sec:final_classification}
+
+L'últim pas és fer la nostra Xarxa Bayesiana sigui un classificador bayesià per a que assigni a nous finals determinats de partides d'escacs si les peces blanques guanyaran o no. Ara que ja tenim l'estructura i l'estimació dels paràmetres podem avaluar la bondat d'ajust del model, és a dir: com s'adapta a les dades observades.
+
+<<final_classification, results="hide">>=
+matriu.confusio <- as.matrix(table(prediccio, splits$validateset$target))
+matriu.confusio
+
+# Accuracy
+Accuracy_final <- round((sum(matriu.confusio[1,1] + 
+                               matriu.confusio[2,2])/
+                                  sum(matriu.confusio))*100,2)
+
+# True Positive Rate
+TPR_final <- round((sum(matriu.confusio[1,1])/
+                      sum(matriu.confusio[1,1] + 
+                            matriu.confusio[2,1]))*100,2)
+
+# True Negative Rate
+TNR_final <- round((sum(matriu.confusio[2,2])/
+                      sum(matriu.confusio[2,2] + 
+                            matriu.confusio[1,2]))*100,2)
+
+# Balanced Accuracy
+baccuracy_final <- round((TPR_final+TNR_final)/2,2)
+
+# Positive Predictive Value
+PPV_final <- round((sum(matriu.confusio[1,1])/
+                      sum(matriu.confusio[1,1] + 
+                            matriu.confusio[1,2]))*100,2)
+
+# F1 score
+F1_final <- round(2*((PPV_final*TPR_final)/(PPV_final+TPR_final)),2)
+
+Mesures <- rbind(Accuracy_final, TPR_final, TNR_final, 
+                 baccuracy_final, PPV_final, F1_final)
+rownames(Mesures) <- c("Accuracy","True Positive Rate", 
+                       "True Negative Rate", "Balanced Accuracy", 
+                       "Positive Predictive Value", "F1 score")
+colnames(Mesures) <- "Métriques"
+Mesures
+
+# Observem finalment que la xarxa bayesiana Augmented Naive Bayes obté unes 
+# métriques molt bones (>94%) 
+@
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Subsubsection: Validació del model
+%%%
+%%%%%%%%%%%%%%%
+\subsubsection{Validació del model}
+\label{sec:final_validation}
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%
+%%%
+%%% Section: Predicció per noves partides
+%%%
+%%%%%%%%%%%%%%%
+\section{Predicció per noves partides}
+\label{sec:prediccions}
+
+Ara podem simular noves partides d'escacs on es doni aquesta situació de final de partida onles peces blanques tenen el Rei i un Peó mentres que les negres tenen el Rei i un torre.
+
+\begin{figure}[ht!]
+     \begin{center}
+<<new_game, results="hide">>=
+# https://www.apronus.com/chess/diagram/editor/
+chss3 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
+plot(chss3)
+@
+     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
+     \label{fig:chss3}
+     \end{center}
+\end{figure}
+
+<<predictions, results="hide">>=
+a <- lapply(dades, function(x) sample(levels(x),1))
+a <- unlist(a[-c(length(a))])
+
+a <- dades[sample(1:nrow(dades),1),]
+a <- a[-c(length(a))]
+
+a <- c(TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
+       "g",FALSE,"n",TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,
+       TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,"n")
+
+xarxa.evid <- setEvidence(xarxa.grain, nodes = atributes,
+                          states = a)
+evid <- xarxa.evid$evidence
+qq <- querygrain(xarxa.evid, nodes = c("target"), type = "marginal")
+distribucio <- qq$target
+prediccio <- dimnames(distribucio)[[1]][which.max(distribucio)]
+CL <- round(100*max(distribucio), 2)
+reincidence.risc <- round(100*distribucio[2], 2)
+
+Resultat <- matrix(c(prediccio, CL,reincidence.risc),nrow=1)
+Resultat <- as.data.frame(Resultat)
+colnames(Resultat) <- c("Predicció","Confidence Level (CL) en %",
+                        "Risc de reincidència")
+evid
+Resultat
+@
 
 
 
@@ -722,9 +951,20 @@ F1 <- 2*((PPV*TPR)/(PPV+TPR))
 <<augmented_classification>>
 @
 
+\subsection{\textit{Triatge del clasificador bayesiá final}}
 
+<<echo=TRUE, eval=FALSE>>=
+<<triatge>>
+<<final_structure>>
+<<final_parameters>>
+<<final_classification>>
+@
 
+\subsection{\textit{Predicció per noves partides}}
 
+<<echo=TRUE, eval=FALSE>>=
+<<predictions>>
+@
 
 
 
