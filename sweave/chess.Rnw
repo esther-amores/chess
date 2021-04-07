@@ -297,6 +297,8 @@ str(dades)
 apply(dades, 2, table)
 @
 
+Cal destacar que la variable \textit{spcop} obté una distribució de les dades molt anòmala i només existeix un cas on aquesta variable prén el valor \texttt{TRUE}, i es trindrá en compte alhora de triar les variables que s'utilitzin per entrenar les xarxes. 
+
 Pel que fa al preprocessament de les dades, primerament hi ajustem un model de regressió logística amb la funció \texttt{glm} (veure Taula \ref{tab:glm}), ja que les la variable classe del dataset és dicotòmica (0-blanques perden, 1-blanques guanyen). 
 
 \begin{table}
@@ -310,7 +312,7 @@ xtable(model)
 	\label{tab:glm}
 \end{table}
 
-A continuació, per seleccionar les variables estadísticament significatives realitzem una selecció per mitjà del Criteri d'Informació d'Akaike (AIC) amb l'\textit{Stepwise Algorithm}, tant el \textit{Forward} com el \textit{Backward}, i guardem el nou model amb les variables escollides en un nou objecte. El millor model escollit després de fer el mètode \textit{Stepwise} segons valor del AIC exlou les variables \textbf{stlmt, reskd, skewr, bkspr, simpl, wtoeg, dwipd} i \textbf{spcop}.
+A continuació, per seleccionar les variables estadísticament significatives realitzem una selecció per mitjà del Criteri d'Informació d'Akaike (AIC) amb l'\textit{Stepwise Algorithm}, tant el \textit{Forward} com el \textit{Backward}, i guardem el nou model amb les variables escollides en un nou objecte. El millor model escollit després de fer el mètode \textit{Stepwise} segons valor del AIC exclou les variables \textbf{stlmt, reskd, skewr, bkspr, simpl, wtoeg, dwipd} i \textbf{spcop}, i aquesta última hem vist anteriorment que obté una distribució anòmala dels seus casos.
 
 <<preprocessing2, results="hide">>=
 stepwise <- stepAIC(model, direction = "both")
@@ -318,7 +320,143 @@ stepwise <- stepAIC(model, direction = "both")
 # treu les variables: stlmt, reskd, skewr, bkspr, simpl, wtoeg, dwipd, spcop
 
 # Les variables escollides les guardem en aquest nou objecte:
-dades.step <- stepwise$model
+dades <- stepwise$model
+dades <- dades[c(2:ncol(dades),1)]
+@
+
+Per tant, aquestes variables no les considerarem al posterior entrenament de les xarxes. 
+
+
+<<>>=
+splitdf <- function(dataframe, seed = NULL){
+  if(!is.null(seed)) set.seed(seed)
+  index <- 1:nrow(dataframe)
+  trainingindex <- sample(index,length(index)*0.8)
+  trainingset <- dataframe[trainingindex, ]
+  validateset <- dataframe[-trainingindex, ]
+  list(trainingset = trainingset, validateset = validateset)
+}
+
+splits <- splitdf(dades, seed = 666)
+# ens dona una llista: dos data frames anomenats "training" i "validate"
+# Nombre d'observacions en cada subconjunt de dades:
+lapply(splits, nrow)
+
+training <- splits$trainingset
+test <- splits$validateset
+
+# - Fem el k-fold cross validation:
+kfold <- function(dades, k, seed = NULL){
+  if(!is.null(seed)) set.seed(seed)
+  trainingset <- list()
+  testset <- list()
+  
+  for(i in 1:k){
+    dades$id <- sample(1:k, nrow(dades), replace = TRUE)
+    folds <- 1:k
+    
+    trainingset[[i]] <- subset(dades, id %in% folds[-i])
+    testset[[i]] <- subset(dades, id %in% c(i))
+  }
+  
+  return(list(training = trainingset, test = testset))
+}
+
+Bayes_clasificator <- function(dades, wl, bl, k, seed){
+  #### 1er: Aprendre l'estructura de les dades (amb totes les variables) ####
+  # Generem la llista amb tots els folds i treiem la columna dels id's
+  # tant pels trainings com pels tests
+  
+  training <- kfold(dades, k, seed)$training %>%
+    lapply(function(x) x[,-ncol(x)])
+  
+  test <- kfold(dades, k, seed)$test %>%
+    lapply(function(x) x[,-ncol(x)])
+  
+  # - Aprendre l'estructura de les dades per tots els possibles folds
+  xarxa <- lapply(training, function(x) hc(x, score = "bic", whitelist = wl, blacklist = bl))
+  
+  # Fem el plot per cada fold
+  lapply(xarxa, graphviz.plot)
+  
+  #### 2on: Estimem els paràmetres de la xarxa, pel mètode MLE ####
+  xarxa.estimada <- list()
+  for(i in 1:k)
+    xarxa.estimada[[i]] <- bn.fit(xarxa[[i]], training [[i]], method = "mle")
+  
+  #### 3er: Fem la validació, estimar la classe per tots els conjunts tests ####
+  # passem la xarxa a format gRain
+  xarxa.grain <- lapply(xarxa.estimada, function(x) suppressWarnings(as.grain(x)))
+  
+  distribucio <- NULL
+  prediccio <- NULL
+  CL <- NULL
+  
+  for(i in 1:k){
+    distribucio[[i]] <- list()
+    prediccio[[i]] <- list()
+    CL[[i]] <- list()
+    for(j in 1:nrow(test[[i]])){
+      if(is.numeric(predict(xarxa.grain[[i]], 
+                            response="target", 
+                            test[[i]][j,], 
+                            predictors=atributes, 
+                            type="dist")$pred[[1]][1,1])==FALSE)
+      {
+        prediccio[[i]][[j]]<-NA
+        CL[[i]][[j]]<-0
+        distribucio[[i]][[j]]<-c(rep(0,2))
+      }
+      else
+      {
+        distribucio[[i]][[j]] <- list(predict(xarxa.grain[[i]],
+                                              response="target",
+                                              test[[i]][j,],
+                                              predictors=atributes,
+                                              type="dist")$pred[[1]][1,])
+        prediccio[[i]][[j]] <- names(distribucio[[i]][[j]][[1]])[which.max(distribucio[[i]][[j]][[1]])]
+        CL[[i]][[j]]<-max(distribucio[[i]][[j]][[1]])
+      }
+    }
+  }
+  
+  #### 4t: Càlcul de la matriu de confusió i les mesures d'avaluació ####
+  matriu.confusio <- list()
+  for(i in 1:k)
+    matriu.confusio[[i]] <- as.matrix(table(unlist(prediccio[[i]]), test[[i]]$target))
+  
+  # Accuracy
+  accuracy <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
+  accuracy <- unlist(accuracy)
+  
+  # True Positive Rate
+  TPR <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[2,1]))*100,2))
+  TPR <- unlist(TPR)
+  
+  # True Negative Rate
+  TNR <- lapply(matriu.confusio, function(x) round((sum(x[2,2])/sum(x[2,2] + x[1,2]))*100,2))
+  TNR <- unlist(TNR)
+  
+  # Balanced Accuracy
+  baccuracy <- round((TPR+TNR)/2,2)
+  
+  # Positive Predictive Value
+  PPV <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[1,2]))*100,2))
+  PPV <- unlist(PPV)
+  
+  # F1 score
+  F1 <- round(2*((PPV*TPR)/(PPV+TPR)),2)
+  
+  Mesures <- rbind(accuracy, TPR, TNR, 
+                   baccuracy, PPV, F1)
+  Mesures <- apply(Mesures, 1, mean)
+  Mesures <- matrix(Mesures, ncol = 1)
+  rownames(Mesures) <- c("Accuracy","True Positive Rate", 
+                         "True Negative Rate", "Balanced Accuracy", 
+                         "Positive Predictive Value", "F1 score")
+  colnames(Mesures) <- "Mètriques"
+  return(list(Confusion_matrix = matriu.confusio, Metrics = Mesures))
+}
 @
 
 
@@ -344,11 +482,7 @@ Ara que ja hem fet el preprocessament de les dades, hem d'aprendre l'estructura 
 Com volem que el classificador bayesià sigui un Naive Bayes, introduïrem una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) cap a tota la resta de variables explicatives, i una \textit{black list} per evitar que les variables explicatives tinguin fletxes entre elles. 
 
 <<structure, results='hide'>>=
-#### 1er: Aprendre l'estructura de les dades (amb totes les variables) ####
-
-# - Introduim la black i white list:
 atributes <- colnames(dades[-ncol(dades)])
-  
 wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
 bl <- rbind(
   expand.grid(atributes, atributes),
@@ -356,38 +490,9 @@ bl <- rbind(
   data.frame(Var1 = "target", Var2= "target")
 )
 
-# - Fem el k-fold cross validation:
-kfold <- function(k, seed = NULL){
-  if(!is.null(seed)) set.seed(seed)
-  trainingset <- list()
-  testset <- list()
-  
-  for(i in 1:k){
-    dades$id <- sample(1:k, nrow(dades), replace = TRUE)
-    folds <- 1:k
-  
-    trainingset[[i]] <- subset(dades, id %in% folds[-i])
-    testset[[i]] <- subset(dades, id %in% c(i))
-  }
-  
-  return(list(training = trainingset, test = testset))
-}
+Naive <- Bayes_clasificator(training, wl, bl,5, 666)
 
-# Generem la llista amb tots els folds i treiem la columna dels id's
-# tant pels trainings com pels tests
-
-training <- kfold(5, 666)$training %>%
-  lapply(function(x) x[,-ncol(x)])
-
-test <- kfold(5, 666)$test %>%
-  lapply(function(x) x[,-ncol(x)])
-
-
-# - Aprendre l'estructura de les dades per tots els possibles folds
-xarxa <- lapply(training, function(x) hc(x, score = "bic", whitelist = wl, blacklist = bl))
-
-# Fem el plot per cada fold
-lapply(xarxa, graphviz.plot)
+xtable(Naive$Metrics)
 @
 
 
@@ -401,50 +506,6 @@ lapply(xarxa, graphviz.plot)
 
 Ara que ja tenim l'estructura de les dades donada, estimarem els paràmetres mitjançant la base de dades per a cadascuna de les variables. 
 
-<<parameters, results='hide'>>=
-#### 2on: Estimem els paràmetres de la xarxa, pel mètode MLE ####
-xarxa.estimada <- list()
-for(i in 1:5)
-  xarxa.estimada[[i]] <- bn.fit(xarxa[[i]], training [[i]], method = "mle")
-
-#### 3er: Fem la validació, estimar la classe per tots els conjunts tests ####
-# passem la xarxa a format gRain
-xarxa.grain <- lapply(xarxa.estimada, function(x) suppressWarnings(as.grain(x)))
-
-distribucio <- NULL
-prediccio <- NULL
-CL <- NULL
-
-for(i in 1:5){
-  distribucio[[i]] <- list()
-  prediccio[[i]] <- list()
-  CL[[i]] <- list()
-  for(j in 1:nrow(test[[i]])){
-    if(is.numeric(predict(xarxa.grain[[i]], 
-                          response="target", 
-                          test[[i]][j,], 
-                          predictors=atributes, 
-                          type="dist")$pred[[1]][1,1])==FALSE)
-    {
-      prediccio[[i]][[j]]<-NA
-      CL[[i]][[j]]<-0
-      distribucio[[i]][[j]]<-c(rep(0,2))
-    }
-    else
-    {
-      distribucio[[i]][[j]] <- list(predict(xarxa.grain[[i]],
-                                            response="target",
-                                            test[[i]][j,],
-                                            predictors=atributes,
-                                            type="dist")$pred[[1]][1,])
-      prediccio[[i]][[j]] <- names(distribucio[[i]][[j]][[1]])[which.max(distribucio[[i]][[j]][[1]])]
-      CL[[i]][[j]]<-max(distribucio[[i]][[j]][[1]])
-    }
-  }
-}
-@
-
-
 %%%%%%%%%%%%%%%
 %%%
 %%% Subsubsection: Classificació Bayesiana
@@ -454,53 +515,6 @@ for(i in 1:5){
 \label{sec:classification}
 
 L'últim pas és fer la nostra Xarxa Bayesiana sigui un classificador bayesià per a que assigni a nous finals determinats de partides d'escacs si les peces blanques guanyaran o no. Ara que ja tenim l'estructura i l'estimació dels paràmetres podem avaluar la bondat d'ajust del model, és a dir: com s'adapta a les dades observades.
-
-<<classification, results="hide">>=
-#### 4t: Càlcul de la matriu de confusió i les mesures d'avaluació ####
-matriu.confusio <- list()
-for(i in 1:5)
-  matriu.confusio[[i]] <- as.matrix(table(unlist(prediccio[[i]]), test[[i]]$target))
-
-# Accuracy
-accuracy_NB <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
-accuracy_NB <- unlist(accuracy_NB)
-
-# True Positive Rate
-TPR_NB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[2,1]))*100,2))
-TPR_NB <- unlist(TPR_NB)
-
-# True Negative Rate
-TNR_NB <- lapply(matriu.confusio, function(x) round((sum(x[2,2])/sum(x[2,2] + x[1,2]))*100,2))
-TNR_NB <- unlist(TNR_NB)
-
-# Balanced Accuracy
-baccuracy_NB <- (TPR_NB+TNR_NB)/2
-
-# Positive Predictive Value
-PPV_NB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[1,2]))*100,2))
-PPV_NB <- unlist(PPV_NB)
-
-# F1 score
-F1_NB <- 2*((PPV_NB*TPR_NB)/(PPV_NB+TPR_NB))
-
-@
-
-
-%%%%%%%%%%%%%%%
-%%%
-%%% Subsubsection: Validació del model
-%%%
-%%%%%%%%%%%%%%%
-\subsubsection{Validació del model}
-\label{sec:validation}
-
-
-
-
-
-
-
-
 
 
 %%%%%%%%%%%%%%%
@@ -523,45 +537,14 @@ F1_NB <- 2*((PPV_NB*TPR_NB)/(PPV_NB+TPR_NB))
 Volem que el classificador bayesià sigui un Augmented Naive Bayes, per fer aixó introduïrem una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) cap a tota la resta de variables explicatives, però en aquest cas no afegirem una \textit{black list} perquè no ens cal evitar que les variables explicatives tinguin fletxes entre elles. 
 
 <<augmented_structure, results='hide'>>=
-#### 1er: Aprendre l'estructura de les dades (amb totes les variables) ####
-
-# - Introduim la white list:
 atributes <- colnames(dades[-ncol(dades)])
-  
 wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
 
-# - Fem el k-fold cross validation:
-kfold <- function(k, seed = NULL){
-  if(!is.null(seed)) set.seed(seed)
-  trainingset <- list()
-  testset <- list()
-  
-  for(i in 1:k){
-    dades$id <- sample(1:k, nrow(dades), replace = TRUE)
-    folds <- 1:k
-  
-    trainingset[[i]] <- subset(dades, id %in% folds[-i])
-    testset[[i]] <- subset(dades, id %in% c(i))
-  }
-  
-  return(list(training = trainingset, test = testset))
-}
+Augmented <- Bayes_clasificator(training, wl, bl = NULL, 5, 666)
 
-# Generem la llista amb tots els folds i treiem la columna dels id's
-# tant pels trainings com pels tests
+Augmented$Metrics
 
-training <- kfold(5, 666)$training %>%
-  lapply(function(x) x[,-ncol(x)])
-
-test <- kfold(5, 666)$test %>%
-  lapply(function(x) x[,-ncol(x)])
-
-
-# - Aprendre l'estructura de les dades per tots els possibles folds
-xarxa <- lapply(training, function(x) hc(x, score = "bic", whitelist = wl))
-
-# Fem el plot per cada fold
-lapply(xarxa, graphviz.plot)
+xtable(Naive$Metrics)
 @
 
 
@@ -575,49 +558,6 @@ lapply(xarxa, graphviz.plot)
 
 Ara que ja tenim l'estructura de les dades donada, estimarem els paràmetres mitjançant la base de dades per a cadascuna de les variables. 
 
-<<augmented_parameters, results='hide'>>=
-#### 2on: Estimem els paràmetres de la xarxa, pel mètode MLE ####
-xarxa.estimada <- list()
-for(i in 1:5)
-  xarxa.estimada[[i]] <- bn.fit(xarxa[[i]], training [[i]], method = "mle")
-
-#### 3er: Fem la validació, estimar la classe per tots els conjunts tests ####
-# passem la xarxa a format gRain
-xarxa.grain <- lapply(xarxa.estimada, function(x) suppressWarnings(as.grain(x)))
-
-distribucio <- NULL
-prediccio <- NULL
-CL <- NULL
-
-for(i in 1:5){
-  distribucio[[i]] <- list()
-  prediccio[[i]] <- list()
-  CL[[i]] <- list()
-  for(j in 1:nrow(test[[i]])){
-    if(is.numeric(predict(xarxa.grain[[i]], 
-                          response="target", 
-                          test[[i]][j,], 
-                          predictors=atributes, 
-                          type="dist")$pred[[1]][1,1])==FALSE)
-    {
-      prediccio[[i]][[j]]<-NA
-      CL[[i]][[j]]<-0
-      distribucio[[i]][[j]]<-c(rep(0,2))
-    }
-    else
-    {
-      distribucio[[i]][[j]] <- list(predict(xarxa.grain[[i]],
-                                            response="target",
-                                            test[[i]][j,],
-                                            predictors=atributes,
-                                            type="dist")$pred[[1]][1,])
-      prediccio[[i]][[j]] <- names(distribucio[[i]][[j]][[1]])[which.max(distribucio[[i]][[j]][[1]])]
-      CL[[i]][[j]]<-max(distribucio[[i]][[j]][[1]])
-    }
-  }
-}
-@
-
 
 %%%%%%%%%%%%%%%
 %%%
@@ -629,87 +569,28 @@ for(i in 1:5){
 
 L'últim pas és fer la nostra Xarxa Bayesiana sigui un classificador bayesià per a que assigni a nous finals determinats de partides d'escacs si les peces blanques guanyaran o no. Ara que ja tenim l'estructura i l'estimació dels paràmetres podem avaluar la bondat d'ajust del model, és a dir: com s'adapta a les dades observades.
 
-<<augmented_classification, results="hide">>=
-#### 4t: Càlcul de la matriu de confusió i les mesures d'avaluació ####
-matriu.confusio <- list()
-for(i in 1:5)
-  matriu.confusio[[i]] <- as.matrix(table(unlist(prediccio[[i]]), test[[i]]$target))
-
-# Accuracy
-accuracy_ANB <- lapply(matriu.confusio, function(x) round((sum(x[1,1] + x[2,2])/sum(x))*100,2))
-accuracy_ANB <- unlist(accuracy_ANB)
-
-# True Positive Rate
-TPR_ANB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[2,1]))*100,2))
-TPR_ANB <- unlist(TPR_ANB)
-
-# True Negative Rate
-TNR_ANB <- lapply(matriu.confusio, function(x) round((sum(x[2,2])/sum(x[2,2] + x[1,2]))*100,2))
-TNR_ANB <- unlist(TNR_ANB)
-
-# Balanced Accuracy
-baccuracy_ANB <- (TPR_ANB+TNR_ANB)/2
-
-# Positive Predictive Value
-PPV_ANB <- lapply(matriu.confusio, function(x) round((sum(x[1,1])/sum(x[1,1] + x[1,2]))*100,2))
-PPV_ANB <- unlist(PPV_ANB)
-
-# F1 score
-F1_ANB <- 2*((PPV_ANB*TPR_ANB)/(PPV_ANB+TPR_ANB))
-
-@
-
 
 %%%%%%%%%%%%%%%
 %%%
-%%% Subsubsection: Validació del model
+%%% Subsection: Tria del clasificador bayesià final
 %%%
 %%%%%%%%%%%%%%%
-\subsubsection{Validació del model}
-\label{sec:augmented_validation}
-
-
-
-%%%%%%%%%%%%%%%
-%%%
-%%% Subsection: Triatge del clasificador bayesiá final
-%%%
-%%%%%%%%%%%%%%%
-\subsection{\textit{Triatge del calsificador bayesiá final}}
-\label{sec:triatge_clasificador}
+\subsection{\textit{Tria del clasificador bayesià final}}
+\label{sec:tria_clasificador}
 
 Una vegada ja tenim el dos clasificador bayesians "Naive Bayes" i "Augmented Naive Bayes" hem de triar quina de les dues xarxes modelitza millor les nostres dades d'escacs, i aixó o podem fer a partir de les mesures de bondat d'ajust de cadascuna de les xarxes.
 
-<<triatge, results="hide">>=
-Accuracy <- rbind(accuracy_NB,accuracy_ANB)
-colnames(Accuracy) <- paste0(1:5,"-fold")
-Accuracy
+<<tria, results="hide">>=
+Mesures <- cbind(Naive$Metrics, Augmented$Metrics)
+colnames(Mesures) <- c("Naive Bayes", "Augmented Naive Bayes")
 
-TPR <- rbind(TPR_NB,TPR_ANB)
-colnames(TPR) <- paste0(1:5,"-fold")
-TPR
+xtable(Mesures)
 
-TNR <- rbind(TNR_NB,TNR_ANB)
-colnames(TNR) <- paste0(1:5,"-fold")
-TNR
-
-PPV <- rbind(PPV_NB,PPV_ANB)
-colnames(PPV) <- paste0(1:5,"-fold")
-PPV
-
-F1 <- rbind(F1_NB, F1_ANB)
-colnames(F1) <- paste(1:5, "-fold")
-F1
-
-(Accuracy <- apply(Accuracy, 1, FUN=mean))
-(TPR <- apply(TPR, 1, FUN=mean))
-(TNR <- apply(TNR, 1, FUN=mean))
-(PPV <- apply(PPV, 1, FUN=mean))
 #Hacer tabla con las mesures.
 @
 
 
-Veiem que totes les mesures (accuracy, TPR, TNR, PPV, F1) que hem calculat per saber com de bé estima les xarxes bayesianes, les del "Augmented Naive Bayes" són més elevades (>95 \%) que les del "Naive Bayes" y per tant triem el model de Augmented Naive Bayes per modelar de nou pero ara amb tota la base de dades training sense fer k-fold ja que ara farem servir split-validation per poder validar el model, dividim la base de dades, a l'atzar, en dos trossos, training (80\%), amb el qual aprendrem la xarxa, i validate (20\%).
+Veiem que totes les mesures (accuracy, TPR, TNR, PPV, F1) que hem calculat per saber com de bé estima les xarxes bayesianes, les del ``Augmented Naive Bayes'' són més elevades (>95\%) que les del ``Naive Bayes'' y per tant triem el model de ``Augmented Naive Bayes'' per modelar de nou pero ara amb tota la base de dades training sense fer k-fold ja que ara farem servir split-validation per poder validar el model, dividim la base de dades, a l'atzar, en dos trossos, training (80\%), amb el qual aprendrem la xarxa, i validate (20\%).
 
 %%%%%%%%%%%%%%%
 %%%
@@ -719,28 +600,16 @@ Veiem que totes les mesures (accuracy, TPR, TNR, PPV, F1) que hem calculat per s
 \subsubsection{Aprenentatge d'estructura final}
 \label{sec:augmented_structure_final}
 
-Com finalment la xarxa ha de ser un Augmented Naive Bayes, tornarem ha generar una \textit{white list} per forçar tot els arcs de la variable clase (\textbf{target}) p a la resta de variables, pero sense una \textit{black list} per que el model pugui crear arcs entre les variables explicatives.
+Com finalment la xarxa ha de ser un ``Augmented Naive Bayes'', tornarem ha generar una \textit{white list} per forçar tot els arcs de la variable clase (\textbf{target}) cap a la resta de variables, pero sense una \textit{black list} per que el model pugui crear arcs entre les variables explicatives.
 
 <<final_structure, results="hide">>=
 atributes <- colnames(dades[-ncol(dades)])
 
 wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
 
-splitdf <- function(dataframe, seed = NULL){
-  if(!is.null(seed)) set.seed(seed)
-  index <- 1:nrow(dataframe)
-  trainingindex <- sample(index,length(index)*0.8)
-  trainingset <- dataframe[trainingindex, ]
-  validateset <- dataframe[-trainingindex, ]
-  list(trainingset = trainingset, validateset = validateset)
-}
+xarxa <- hc(training, score = "bic", whitelist = wl)
 
-splits <- splitdf(dades, seed = 666)
-# ens dona una llista: dos data frames anomenats "training" i "validate"
-# Nombre d'observacions en cada subconjunt de dades:
-lapply(splits, nrow)
-
-xarxa <- hc(splits$trainingset, score = "bic", whitelist = wl)
+graphviz.plot(xarxa)
 @
 
 %%%%%%%%%%%%%%%
@@ -754,7 +623,7 @@ xarxa <- hc(splits$trainingset, score = "bic", whitelist = wl)
 Ara que ja tenim l'estructura de les dades donada, estimarem els paràmetres mitjançant la base de dades per a cadascuna de les variables. 
 
 <<final_parameters, results="hide">>=
-xarxa.estimada <- bn.fit(xarxa, splits$trainingset, method = "mle")
+xarxa.estimada <- bn.fit(xarxa, training, method = "mle")
 xarxa.grain <- suppressWarnings(as.grain(xarxa.estimada))
 
 prediccio <- NULL
@@ -762,9 +631,9 @@ CL <- NULL
 prueba <- NULL
 distribucio <- NULL
 
-for (j in 1:nrow(splits$validateset)){
+for (j in 1:nrow(test)){
   if (is.numeric(predict(xarxa.grain, response="target", 
-                         splits$validateset[j,], predictors = atributes,
+                         test[j,], predictors = atributes,
                          type = "dist")$pred[[1]][1,1])==FALSE){
     prediccio[[j]] <- NA
     CL[[j]] <- 0
@@ -772,7 +641,7 @@ for (j in 1:nrow(splits$validateset)){
   }
   else{
     prueba[[j]] <- predict(xarxa.grain, response="target", 
-                           splits$validateset[j,], predictors = atributes, 
+                           test[j,], predictors = atributes, 
                            type="dist")
     distribucio[[j]] <- prueba[[j]]$pred[[1]]
     prediccio[[j]] <- dimnames(distribucio[[j]])[[2]][which.max(distribucio[[j]])]
@@ -792,7 +661,7 @@ for (j in 1:nrow(splits$validateset)){
 L'últim pas és fer la nostra Xarxa Bayesiana sigui un classificador bayesià per a que assigni a nous finals determinats de partides d'escacs si les peces blanques guanyaran o no. Ara que ja tenim l'estructura i l'estimació dels paràmetres podem avaluar la bondat d'ajust del model, és a dir: com s'adapta a les dades observades.
 
 <<final_classification, results="hide">>=
-matriu.confusio <- as.matrix(table(prediccio, splits$validateset$target))
+matriu.confusio <- as.matrix(table(prediccio, test$target))
 matriu.confusio
 
 # Accuracy
@@ -829,23 +698,30 @@ rownames(Mesures) <- c("Accuracy","True Positive Rate",
 colnames(Mesures) <- "Métriques"
 Mesures
 
-# Observem finalment que la xarxa bayesiana Augmented Naive Bayes obté unes 
-# métriques molt bones (>94%) 
+xtable(Mesueres)
+#  
 @
 
-%%%%%%%%%%%%%%%
+Observem finalment que la xarxa bayesiana Augmented Naive Bayes obté unes métriques molt bones (>94\%) i finalment ja podem entrenar la nostra xarxa bayesiana final amb \texttt{totes} les dades fent servir un ``Augmented Naive Bayes''.
+
+%%%%%%%%%%%%%%%%
 %%%
-%%% Subsubsection: Validació del model
+%%% Augmented Bayes classifier final 
 %%%
-%%%%%%%%%%%%%%%
-\subsubsection{Validació del model}
-\label{sec:final_validation}
+%%%%%%%%%%%%%%%%
+<<final, results="hide">>=
+# - Introduim la white list:
+atributes <- colnames(dades[-ncol(dades)])
 
+wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
 
+xarxa <- hc(dades, score = "bic", whitelist = wl)
 
+graphviz.plot(xarxa)
 
-
-
+xarxa.estimada <- bn.fit(xarxa, dades, method = "mle")
+xarxa.grain <- suppressWarnings(as.grain(xarxa.estimada))
+@
 
 
 
@@ -857,7 +733,9 @@ Mesures
 \section{Predicció per noves partides}
 \label{sec:prediccions}
 
-Ara podem simular noves partides d'escacs on es doni aquesta situació de final de partida onles peces blanques tenen el Rei i un Peó mentres que les negres tenen el Rei i un torre.
+Ara podem simular noves partides d'escacs on es doni aquesta situació de final de partida onles peces blanques tenen el Rei i un Peó mentres que les negres tenen el Rei i un torre. Hem pensat tres propostes de partides d'escacs amb aqueste condicions i son les següents:
+
+
 
 \begin{figure}[ht!]
      \begin{center}
@@ -871,6 +749,30 @@ plot(chss3)
      \end{center}
 \end{figure}
 
+\begin{figure}[ht!]
+     \begin{center}
+<<new_game, results="hide">>=
+# https://www.apronus.com/chess/diagram/editor/
+chss4 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
+plot(chss4)
+@
+     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
+     \label{fig:chss4}
+     \end{center}
+\end{figure}
+
+\begin{figure}[ht!]
+     \begin{center}
+<<new_game, results="hide">>=
+# https://www.apronus.com/chess/diagram/editor/
+chss5 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
+plot(chss5)
+@
+     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
+     \label{fig:chss5}
+     \end{center}
+\end{figure}
+
 <<predictions, results="hide">>=
 a <- lapply(dades, function(x) sample(levels(x),1))
 a <- unlist(a[-c(length(a))])
@@ -880,10 +782,17 @@ a <- a[-c(length(a))]
 
 a <- c(TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
        "g",FALSE,"n",TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,
-       TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,"n")
+       TRUE,TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,TRUE,"n")
 
-xarxa.evid <- setEvidence(xarxa.grain, nodes = atributes,
-                          states = a)
+a <- c(TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,T,FALSE,FALSE,FALSE,FALSE,FALSE,
+       "g",FALSE,"n",TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,
+       TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,"t")
+
+a <- c(FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
+       "l",FALSE,"n",FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
+       TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,"n")
+
+xarxa.evid <- setEvidence(xarxa.grain, nodes = atributes, states = a)
 evid <- xarxa.evid$evidence
 qq <- querygrain(xarxa.evid, nodes = c("target"), type = "marginal")
 distribucio <- qq$target
