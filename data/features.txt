@@ -24,12 +24,6 @@
 24	simpl	a very simple pattern applies: hi aplica un patró molt simple perquè el peó blanc avança i corona (es converteix en una dama), aleshores la torre negra fa escac en a4 i, per tant, blanques estan forçades a menjar la torre amb la dama blanca 
 25	skach	the WK can be skewered after one or more checks: es pot fer 1 o més escacs al rei blanc per sacrificar el peó
 26	skewr	there is a potential skewer as opposed to fork: hi ha una clavada potencial fent una forquilla (atac doble). El peó blanc es corona i la torre negra mou a a4.
-
-##
-se puede hacer un tenedor de un rey a una torre + rei? NO. el rey no puede hacer eso
-##
-
-
 27	skrxp	the BR can achieve a skewer or the BK attacks the WP: la torre negra pot aconseguir un pintxo (atac doble) o el rei negre pot atacar el peó blanc
 28	spcop	there is a special opposition pattern present: hi ha una oposició especial entre dos reis
 29	stlmt	the WK is in stalemate: el rei blanc és ofegat

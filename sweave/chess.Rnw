@@ -1,4 +1,3 @@
-%\documentclass[notitlepage]{article}
 \documentclass[10pt,a4paper,twoside]{article}
 
 \usepackage[utf8]{inputenc}
@@ -20,6 +19,8 @@
 \usepackage{mathtools}
 \usepackage{longtable}
 \usepackage{float}
+\usepackage{graphicx}
+
 
 \hypersetup{
     colorlinks,
@@ -32,16 +33,9 @@
 \newcommand{\Rpackage}[1]{\textsf{#1}}
 \newcommand{\Robject}[1]{\texttt{#1}}
 \newcommand{\HRule}[1]{\rule{\linewidth}{#1}}
-\newcommand{\I}{\mathbbm{1}}
-%\newcommand\allbold[1]{{\boldmath\textbf{#1}}}
-\newcommand{\pvalue}{$p$-value }
 
-
-\def\Item#1\\{\item\allbold{#1}\\}          % set items of an enumerate or itemize list in bold
 \let\origappendix\appendix                 % save the existing appendix command
 \renewcommand\appendix{\clearpage\pagenumbering{roman}\origappendix} % change format of appendix's number of page
-
-\definecolor{lightblue}{rgb}{0.68, 0.85, 0.9}
 
 <<include=FALSE>>=
 library(knitr)
@@ -117,7 +111,7 @@ library(gRain)
 library(rchess)
 library(Rgraphviz)
 library(tidyverse)
-library(MASS) # per realitzar el stepwise
+library(MASS) 
 library(readr)
 library(xtable)
 library(papeR)
@@ -141,12 +135,15 @@ library(papeR)
 \subsection{Els escacs}
 Els escacs són un dels jocs de taula més antics i populars, jugat per dos oponents que mouen 16 peces segons unes determinades regles fixes a través d'un tauler d'escacs i intenta fer escac i mat al rei de l'oponent \cite{chess}. Cada jugador té les peces d'un color, que pot ser blanc o negre, i disposa en iniciar la partida de totes les peces d'un d'aquests colors, que són un rei, una reina (o dama), dos alfils, dos cavalls, dues torres i vuit peons disposades tal i com mostra la Figura \ref{fig:chss}.
 
+L'escac i mat és l'expressió emprada per a indicar que el rei que està en escac no el pot eludir, i per tant la partida és acabada \cite{escacimat}.
+
 \begin{figure}[h]
      \begin{center}
 <<>>=
-chss <- Chess$new()
-plot(chss)
+# chss <- Chess$new()
+# plot(chss)
 @
+     \includegraphics[width=0.5\textwidth]{fotos/chess.png}
      \caption{Diagrama d'escacs. Tauler d'escacs amb les peces col·locades inicialment}
      \label{fig:chss}
      \end{center}
@@ -184,9 +181,10 @@ Per tant, cadascun d'aquests registres representa, de les 3196 posicions de part
      \begin{center}
 <<>>=
 # https://www.apronus.com/chess/diagram/editor/
-chss2 <- Chess$new("8/P7/8/1k6/5r2/8/K7/8 w - - 0 1")
-plot(chss2)
+# chss2 <- Chess$new("8/P7/8/1k6/5r2/8/K7/8 w - - 0 1")
+# plot(chss2)
 @
+     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp1.png}
      \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
      \label{fig:chss2}
      \end{center}
@@ -199,42 +197,43 @@ Cal esmentar, que la distribució que pren aquesta variable \textsc{target} est�
 Per altra banda, a continuació, les \emph{variables atributs} s'exposen de manera detallada a partir d'un exemple (veure Figura \ref{fig:chss2}):
 
 \begin{description}
-    \item[bkblk]el rei negre no està en el camí de les peces blanques
-    \item[bknwy]el rei no molesta en cap moviment de la torre negra (black rook)
-    \item[bkon8]el rei negre està a la fila 8 per ajudar a la torre negra
-    \item[bkona]el rei negre està a la columna A per ajudar a la torre negra
-    \item[bkspr]el rei negre pot ajudar a la torre negre amb 1 moviment
-    \item[bkxbq]el rei negre no està atacat de cap manera pel peó coronat
-    \item[bkxcr]el rei negre pot atacar la cuadrícula crítica al voltant de b7
-    \item[bkxwp]el rei negre pot atacar el peó blanc
-    \item[blxwp]negres ataquen al peó blanc (torre negre només pot en direcció x=-1, és a dir, cap a f7)
-    \item[bxqsq]una o més peces negres (és a dir, o el rei o la torre) controlen el quadrat de la coronació
-    \item[cntxt]el rei blanc està a una cantonada i no en a8
-    \item[dsopp]els reis es troben en oposició: es troben cara a cara en una fila o columna, amb només una casella entre ells
-    \item[dwipd]la distància del rei blanc al punt d'intersecció f4 és gran (\textit{great}, g) o petita (\textit{low}, l)
-    \item[hdchk]es fa escac a la descoberta, és a dir, és l'escac que fa una peça en moure's una altra peça del mateix bàndol que n'obstaculitzava l'acció.
-    \item[katri]el rei negre controla el punt d'intersecció de blanques (\textit{white}, w), negres (\textit{black}, b) o cap (\textit{none}, n)
-    \item[mulch]les peces negres poden tornar a fer escac per guanyar avantatge
-    \item[qxmsq]la casella d'escac i mat és atacada d'alguna manera pel peó blanc coronat
-    \item[r2ar8]la torre negra no té accés a la fila 8 o a la columna A
-    \item[reskd]el rei blanc pot ser atacat doblement
-    \item[reskr]la torre negra en a4 faria una amenaça doble
-    \item[rimmx]la torre negra pot ser capturada de forma segura
-    \item[rkxwp]si la torre negra es mou a f7, amenaça al peó blanc
-    \item[rxmsq]la torre negra pot atacar de forma segura la casella per fer escac i mat
-    \item[simpl]hi aplica un patró molt simple perquè el peó blanc avança i corona (es converteix en una dama), aleshores la torre negra fa escac en a4 i, per tant, blanques estan forçades a menjar la torre amb la dama blanca
-    \item[skach]es pot fer 1 o més escacs al rei blanc per sacrificar el peó
-    \item[skewr]hi ha una clavada potencial fent un atac doble: el peó blanc es corona i la torre negra mou a a4
-    \item[skrxp]la torre negra pot aconseguir un atac doble o el rei negre pot atacar el peó blanc
-    \item[spcop]hi ha una oposició especial entre dos reis
-    \item[stlmt]el rei blanc és ofegat, és a dir: no té jugades legals per realitzar i el rei no es troba en estat d'escac. La partida acaba en taules
-    \item[thrsk]fer escac a la descoberta (una peça qu eestà interferint l'acció d'una segona, s'aparta del seu camí) fent un doble atac
-    \item[wkcti]el rei blanc no pot controlar el punt d'intersecció f4
-    \item[wkna8]el rei blanc està a la casella a8
-    \item[wknck]el rei blanc està en escac
-    \item[wkovl]el rei blanc està sobrecarregat, és a dir: el rei blanc pot defensar una de les dues peces que estan sent amenaçades, per tant, sacrifica l'altre peça
-    \item[wkpos]el rei blanc està en una potencial posició de rebre un atac doble
-    \item[wtoeg]el rei blanc està a una casella de la cantonada
+    \item[bkblk]El rei negre no està en el camí de les peces blanques.
+    \item[bknwy]El rei negre no molesta en cap moviment de la torre negra, és a dir, no està en el camí de la torre negra.
+    \item[bkon8]El rei negre està a la fila 8 per ajudar a la torre negra.
+    \item[bkona]El rei negre està a la columna A per ajudar a la torre negra.
+    \item[bkspr]El rei negre pot ajudar a la torre negre amb 1 moviment.
+    \item[bkxbq]El rei negre no està atacat de cap manera pel peó coronat.
+    \item[bkxcr]El rei negre pot atacar la cuadrícula crítica al voltant de b7.
+    \item[bkxwp]El rei negre pot atacar el peó blanc.
+    \item[blxwp]Les peces negres ataquen al peó blanc (torre negre només pot en direcció x=-1, és a dir, cap a f7).
+    \item[bxqsq]Una o més peces negres (és a dir, o el rei o la torre) controlen el quadrat de la coronació a8.
+    \item[cntxt]El rei blanc està a una cantonada i no en a8.
+    \item[dsopp]Els reis es troben en oposició: es troben cara a cara en una fila o columna, amb només una casella entre ells.
+    \item[dwipd]La distància del rei blanc al punt d'intersecció és gran (\textit{great}, g) o petita (\textit{low}, l). El punt d'intersecció és aquella casella que talla la torre. En el cas de la Figura \ref{fig:chss2}, per exemple, el punt d'intersecció és f4 perquè és el punt on ha d'arribar el rei blanc per aconseguir alliberar-se, ja que el rei blanc no pot moure's ni per la fila 4 ni per la columna G, i s'ha d'acostar a la torre negra per atacar-la.
+    \item[hdchk]Es fa escac a la descoberta, és a dir, és l'escac que fa una peça en moure's una altra peça del mateix bàndol que n'obstaculitzava l'acció.
+    \item[katri]El rei negre controla el punt d'intersecció de les blanques (\textit{white}, w), negres (\textit{black}, b) o cap (\textit{none}, n).
+    \item[mulch]Les peces negres poden tornar a fer escac per guanyar avantatge.
+    \item[qxmsq]La casella d'escac i mat és atacada d'alguna manera pel peó blanc coronat.
+    \item[r2ar8]La torre negra no té accés a la fila 8 o a la columna A.
+    \item[reskd]El rei blanc pot ser atacat doblement.
+    \item[reskr]La torre negra en a4 faria una amenaça doble.
+    \item[rimmx]La torre negra pot ser capturada de forma segura.
+    \item[rkxwp]Si la torre negra es mou a f7, amenaça al peó blanc.
+    \item[rxmsq]La torre negra pot atacar de forma segura la casella per fer escac i mat.
+    \item[simpl]Hi aplica un patró molt simple perquè el peó blanc avança i corona (es converteix en una dama), aleshores la torre negra fa escac en a4 i, per tant, blanques estan forçades a menjar la torre amb la dama blanca.
+    \item[skach]Es pot fer 1 o més escacs al rei blanc per haver sacrificat el peó.
+    \item[skewr]Hi ha una clavada potencial fent un atac doble: el peó blanc es corona i la torre negra mou a a4.
+    \item[skrxp]La torre negra pot aconseguir un atac doble o el rei negre pot atacar el peó blanc.
+    \item[spcop]Hi ha una oposició especial entre dos reis.
+    \item[stlmt]El rei blanc és ofegat, és a dir: no té jugades legals per realitzar i el rei no es troba en estat d'escac. La partida acaba en taules.
+    \item[thrsk]Es fa escac a la descoberta (una peça que està interferint l'acció d'una segona, s'aparta del seu camí) fent un doble atac.
+    \item[wkcti]El rei blanc no pot controlar el punt d'intersecció. En el cas de la Figura \ref{chss2}, el punt d'intersecció seria f4.
+    \item[wkna8]El rei blanc està a la casella a8.
+    \item[wknck]El rei blanc està en escac.
+    \item[wkovl]El rei blanc està sobrecarregat, és a dir: el rei blanc pot defensar una de les dues peces que estan sent amenaçades, per tant, sacrifica l'altre peça.
+    \item[wkpos]El rei blanc està en una potencial posició de rebre un atac doble.
+    \item[wtoeg]El rei blanc està a una casella de la cantonada.
+    \item[target]Blanques guanyen (\textit{win}) o blanques perden (\textit{nowin}).
 \end{description}
 
 
@@ -263,6 +262,7 @@ Tanmateix, per acabar de constatar si el classificador bayesià escollit funcion
 
 Finalment, farem la construcció final del model amb tota la base de dades per fer la seva predicció de nous casos i aquells que s'han considerat interessants.
 
+
 %%%%%%%%%%%%%%%
 %%%
 %%% Subsection: Preprocessament de les dades
@@ -271,9 +271,8 @@ Finalment, farem la construcció final del model amb tota la base de dades per f
 \subsection{Preprocessament de les dades}
 \label{sec:preprocessing}
 
-En primer lloc, es carrega la base de dades al directori on es treballa i s'assegura que no hi hagi cap valor missing amb la funció \texttt{anyNA}. A més, s'assigna totes les variables com a categòriques amb la funció \texttt{factor} i es mira un resum descriptiu de cadascuna de les variables.
+En primer lloc, es carrega la base de dades al directori on es treballa i s'assegura que no hi hagi cap valor missing amb la funció \texttt{anyNA}. A més, s'assigna totes les variables com a categòriques amb la funció \texttt{factor} i es mira un resum descriptiu de cadascuna de les variables, el qual podem veure a la Taula \ref{tab:freqs}.
 
-Aquest últim pas es pot veure a continuació:
 
 <<data, results="hide", message=FALSE>>=
 #### Importar les dades: ####
@@ -315,7 +314,7 @@ latex.table.fac(dades[(ceiling(ncol(dades)/2)+1):ncol(dades)], table="longtable"
 
 Cal destacar que la variable \textit{spcop} obté una distribució de les dades molt anòmala ja que només existeix un cas on aquesta variable prén el valor \texttt{TRUE}. D'aquesta manera, es tindrà en compte alhora de triar les variables que s'utilitzin per entrenar les xarxes.
 
-Tanmateix, es pot veure que cap de les variables conté valors perduts, i per tant, és un fet destacable i que també s'ha de tenir en compte quan s'aprenen les xarxes.
+A més a més, es pot veure que cap de les variables conté valors perduts, i per tant, és un fet destacable i que també s'ha de tenir en compte quan s'aprenen les xarxes.
 
 Pel que fa al preprocessament de les dades, primerament s'ajusta un model de regressió logística amb la funció \texttt{glm} (veure Taula \ref{tab:glm}), ja que la variable classe del dataset és dicotòmica (0-blanques perden, 1-blanques guanyen).
 
@@ -354,7 +353,7 @@ splitdf <- function(dataframe, seed = NULL){
 }
 
 splits <- splitdf(dades, seed = 666)
-# ens dona una llista: dos data frames anomenats "training" i "validate"
+# Ens dóna una llista: dos data frames anomenats "training" i "validate"
 # Nombre d'observacions en cada subconjunt de dades:
 lapply(splits, nrow)
 
@@ -485,7 +484,7 @@ Bayes_clasificator <- function(dades, wl, bl, k, seed){
 \subsection{\textit{Naive Bayes classifier}}
 \label{sec:naivebayes}
 
-En aquest apartat i a partir del conjunt d'entrenament es durà a terme l'aprenentatge de l'estructura i dels paràmetres del classificador Naive Bayes així com la seva validació, mitjançant el procediment de k-fold cross-validation amb k=10.
+En aquest apartat i a partir del conjunt d'entrenament es durà a terme l'aprenentatge de l'estructura i dels paràmetres del classificador Naive Bayes així com la seva validació, mitjançant el procediment de k-fold cross-validation amb $k=10$.
 
 És a dir, aquest conjunt d'entrenament es separarà en 10 parts proporcionals, que tindràn aproximadament el mateix nombre de casos. Llavors es començarà un procés iteratiu on repetirà 10 vegades el següent: s'aprendrà tant l'estructura com els paràmetres del classificador a partir del conjunt d'entrenament format per 9 trossos i pel tros restant, es farà la validació, és a dir, per cada cas d'aquest s'entren els inputs al classificador entrenat i fem la predicció per l'output.
 Llavors per a cada iteració del procés, s'anirà canviant el tros del conjunt de test per a fer la corresponent validació.
@@ -538,7 +537,7 @@ bl <- rbind(
   data.frame(Var1 = "target", Var2= "target")
 )
 
-Naive <- Bayes_clasificator(training, wl, bl,10, 666)
+Naive <- Bayes_clasificator(training, wl, bl, 10, 666)
 @
 
 
@@ -619,7 +618,7 @@ Com que amb el procés de validació de cada xarxa, s'ha aconseguit una mostra d
 
 S'ha vist que efectivament, els dos p-valors són majors a 0.05 (respectivament són tal i tal), i per tant, no tenim evidències per rebutjar aquesta hipòtesi de normalitat a les dues mostres.
 
-D'aquesta manera, s'ha desenvolupat un t-test de mostres aparellades, per veure si les mitjanes de les accuracies per cada fold del Naive Bayes i Augmented Naive es poden considerar diferents. Aquest test anomena a la hipòtesi nul·la que les mitjanes de les dues mostres són iguals. No obstant, el p-valor ha resultat ser menor a 0.001 i per tant, tenim evidències per rebutjar aquesta hipòtesi nul·la i considerar que les mitjanes de les accuracies són diferents.
+D'aquesta manera, s'ha desenvolupat un t-test de mostres aparellades, per veure si les mitjanes de les accuracies per cada fold del Naive Bayes i Augmented Naive Bayes es poden considerar diferents. Aquest test considera com a hipòtesi nul·la que les mitjanes de les dues mostres són iguals. No obstant, el p-valor ha resultat ser menor a 0.001 i per tant, tenim evidències per rebutjar aquesta hipòtesi nul·la i considerar que les mitjanes de les accuracies són diferents.
 
 Com es pot observar, a la taula següent, la mitjana de l'Accuracy del Augmented Naive Bayes és major al del Naive Bayes. Per tant, el model escollit serà l'Augmented Naive Bayes.
 
@@ -639,7 +638,7 @@ xtable(Mesures)
 print(xtable(Mesures, caption="Mitjanes de les mesures de comportament del classificador Naive Bayes i Augmented Naive Bayes", label="tab:mesures_globals"), table.placement="H")
 @
 
-Tanmateix, podem veure que totes les altres mesures (TPR, TNR, PPV, F1) que hem calculat per saber com de bé s'estima les xarxes bayesianes, les del ``Augmented Naive Bayes'' són més elevades (>95\%) que les del ``Naive Bayes''.
+Així doncs, podem veure que totes les altres mesures (TPR, TNR, PPV, F1) que hem calculat per saber com de bé s'estima les xarxes bayesianes, les del Augmented Naive Bayes són més elevades (>95\%) que les del Naive Bayes.
 
 
 %%%%%%%%%%%%%%%
@@ -650,17 +649,7 @@ Tanmateix, podem veure que totes les altres mesures (TPR, TNR, PPV, F1) que hem 
 \subsubsection{Aprenentatge al conjunt d'entrenament i el de validació al conjunt test del classificador escollit}
 \label{sec:augmented_structure_final}
 
-Finalment el classificador escollit és l'``Augmented Naive Bayes'', en aquest cas tornarem a fer l'aprentatge de l'estructura, considerant una \textit{white list} que forçi tot els arcs de la variable clase (\textbf{target}) cap a la resta de variables, pero sense una \textit{black list} per que el model pugui crear arcs entre les variables explicatives. També farem l'aprenentage dels paràmetres i ambdós es faran a partir del conjunt d'entrenament. Un cop fet aquests aprenentatge, es fa la validació sobre el conjunt tests. Aquestes són les mesures de comportament obtingudes:
-
-<<final_structure, results="hide">>=
-atributes <- colnames(dades[-ncol(dades)])
-
-wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
-
-xarxa <- hc(training, score = "bic", whitelist = wl)
-
-graphviz.plot(xarxa)
-@
+Finalment el classificador escollit és l'Augmented Naive Bayes i, en aquest cas, tornarem a fer l'aprentatge de l'estructura, considerant una \textit{white list} que forçi tot els arcs de la variable classe (\textbf{target}) cap a la resta de variables, però sense una \textit{black list} per a que el model pugui crear arcs entre les variables explicatives. També farem l'aprenentage dels paràmetres i ambdós es faran a partir del conjunt d'entrenament. Un cop fet aquests aprenentatge, es fa la validació sobre el conjunt tests. Aquestes són les mesures de comportament obtingudes (veure Taula \ref{tab:mesures_test}).
 
 
 <<final_parameters, results="hide">>=
@@ -690,6 +679,7 @@ for (j in 1:nrow(test)){
   }
 }
 @
+
 
 <<final_classification, results="hide">>=
 matriu.confusio <- as.matrix(table(unlist(prediccio), test$target))
@@ -738,44 +728,65 @@ xtable(Mesures)
 print(xtable(Mesures, caption = "Mesures de comportament del classificador Augmented Naive Bayes amb l'aprenentatge sobre el conjunt d'entrenament i la validació sobre el de test", label = "tab:mesures_test"), table.placement="H")
 @
 
-Observem, finalment, que el classificador Augmented Naive Bayes obté unes mètriques molt bones (>94\%).
 
-Al següent apartat ja podrem entrenar la nostra xarxa bayesiana final amb \texttt{totes} les dades fent servir un ``Augmented Naive Bayes'', per després procedir a fer la validació.
+Observem, finalment, que el classificador Augmented Naive Bayes obté unes mètriques molt bones (>94\%). Podem veure la seva corresponent estructura generada amb la funció \texttt{graphviz.plot} a la Figura \ref{fig:augmented_nb}.
+
+
+\begin{figure}[ht!]
+     \begin{center}
+<<final_structure, results="hide">>=
+atributes <- colnames(dades[-ncol(dades)])
+wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
+xarxa <- hc(training, score = "bic", whitelist = wl)
+graphviz.plot(xarxa)
+@
+     \caption{Graf del classificador Augmented Naive Bayes amb l'aprenentatge sobre el conjunt d'entrenament i la validació sobre el de test}
+     \label{fig:augmented_nb}
+     \end{center}
+\end{figure}
+
+
+Al següent apartat ja podrem entrenar la nostra xarxa bayesiana final amb \textbf{totes} les dades fent servir un Augmented Naive Bayes, per després procedir a fer la validació.
+
 
 %%%%%%%%%%%%%%%%
 %%%
-%%% Aprenentage i predicció per a noves partides amb el classificador escollit
+%%% Section: Aprenentage i predicció per a noves partides amb el classificador escollit
 %%%
 %%%%%%%%%%%%%%%%
-
 \section{Aprenentage i predicció per a noves partides amb el classificador escollit}
 \label{sec:prediccions}
+
+
+\begin{figure}[ht!]
+     \begin{center}
 <<final, results="hide">>=
 # - Introduim la white list:
 atributes <- colnames(dades[-ncol(dades)])
-
 wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
-
 xarxa <- hc(dades, score = "bic", whitelist = wl)
-
 graphviz.plot(xarxa)
 
 xarxa.estimada <- bn.fit(xarxa, dades, method = "mle")
 xarxa.grain <- suppressWarnings(as.grain(xarxa.estimada))
 @
+     \caption{Graf del classificador Augmented Naive Bayes amb l'aprenentatge sobre el conjunt d'entrenament i la validació sobre el de test ((crec que aquest no cal posar-lo perquè és fa igual que el d'abans, osigui les primeres 4 línies de codi les podríem eliminar directament))}
+     \label{fig:augmented_nb_final}
+     \end{center}
+\end{figure}
 
 
 Un cop s'ha après l'estructura i els paràmetres del classificador Augmented Naive Bayes a partir de tota la base de dades, ja estem preparats per poder simular noves partides d'escacs on es doni aquesta situació de final de partida on les peces blanques tenen el Rei i un Peó mentres que les negres tenen el Rei i un torre. Hem pensat tres propostes de partides d'escacs amb aqueste condicions i son les següents:
 
 
-
 \begin{figure}[ht!]
      \begin{center}
-<<new_game4, results="hide">>=
+<<esther, results="hide">>=
 # https://www.apronus.com/chess/diagram/editor/
-chss3 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
-plot(chss3)
+# chss3 <- Chess$new("8/P4r2/8/K1k5/8/8/8/8 w - - 0 1")
+# plot(chss3)
 @
+     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp3.png}
      \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
      \label{fig:chss3}
      \end{center}
@@ -783,11 +794,12 @@ plot(chss3)
 
 \begin{figure}[ht!]
      \begin{center}
-<<new_game3, results="hide">>=
+<<oscar, results="hide">>=
 # https://www.apronus.com/chess/diagram/editor/
-chss4 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
-plot(chss4)
+# chss4 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
+# plot(chss4)
 @
+     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp2.png}
      \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
      \label{fig:chss4}
      \end{center}
@@ -795,17 +807,18 @@ plot(chss4)
 
 \begin{figure}[ht!]
      \begin{center}
-<<new_game2, results="hide">>=
+<<anna, results="hide">>=
 # https://www.apronus.com/chess/diagram/editor/
-chss5 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
-plot(chss5)
+# chss5 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
+# plot(chss5)
 @
+     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp2.png}
      \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
      \label{fig:chss5}
      \end{center}
 \end{figure}
 
-<<predictions >>=
+<<predictions, eval=F>>=
 a <- lapply(dades, function(x) sample(levels(x),1))
 a <- unlist(a[-c(length(a))])
 
@@ -824,15 +837,21 @@ a <- c(FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
        "l",FALSE,"n",FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
        TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,"n")
 
-xarxa.evid <- setEvidence(xarxa.grain, nodes = atributes, states = a)
+a <- c(F, T, F, F, F, T, T, F, T, F, T, T, "g", F, "n", F, F, F, F, F, F, T, F, F, T, F, F, T, F, F, T, F, F, F, T, F, "n")
+a <- A[-c(5,13,19,24,26,28,29,36)]
+
+atributes <- colnames(dades)
+
+
+xarxa.evid <- setEvidence(xarxa.grain, nodes=atributes, states=a)
 evid <- xarxa.evid$evidence
-qq <- querygrain(xarxa.evid, nodes = c("target"), type = "marginal")
+qq <- querygrain(xarxa.evid, nodes = c("target"), type="marginal")
 distribucio <- qq$target
 prediccio <- dimnames(distribucio)[[1]][which.max(distribucio)]
 CL <- round(100*max(distribucio), 2)
 reincidence.risc <- round(100*distribucio[2], 2)
 
-Resultat <- matrix(c(prediccio, CL,reincidence.risc),nrow=1)
+Resultat <- matrix(c(prediccio, CL,reincidence.risc), nrow=1)
 Resultat <- as.data.frame(Resultat)
 colnames(Resultat) <- c("Predicció","Confidence Level (CL) en %",
                         "Risc de reincidència")
@@ -855,6 +874,7 @@ Resultat
    \bibitem{final} Final (escacs) \textit{Finals contra rei i peó.} \url{https://ca.wikipedia.org/wiki/Final_(escacs)} [Online; visitat el 27 de març de 2021]
     \bibitem{escacs} Escacs \textit{L'escaquer.} \url{https://ca.wikipedia.org/wiki/Escacs} [Online; visitat el 27 de març de 2021]
     \bibitem{database} Base de dades \textit{Chess (King-Rook vs. King-Pawn) Data Set.} \url{https://archive.ics.uci.edu/ml/datasets/Chess+\%28King-Rook+vs.+King-Pawn\%29} [Online; visitat el 27 de març de 2021]
+    \bibitem{escacimat} escac i mat! \url{https://www.enciclopedia.cat/ec-gec-0229671.xml} [Online; visitat el 8 d'abril de 2021]
 \end{thebibliography}
 
 
