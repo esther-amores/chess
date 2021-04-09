@@ -43,7 +43,8 @@ opts_chunk$set(
   echo = FALSE,
   warning = FALSE,
   message = FALSE,
-  fig.align = "center"
+  fig.align = "center",
+  results = "hide"
 )
 @
 
@@ -81,7 +82,9 @@ opts_chunk$set(
 \author[2]{Anna Costa Garrido}
 \author[3]{Oscar Ortiz Romero}
 
-\affil[1]{Applied Statistics Student -- Universitat Autònoma de Barcelona}
+\affil[1,2,3]{Estudiant d'Estadística Aplicada -- Universitat Autònoma de Barcelona}
+%\affil[2]{Applied Statistics Student -- Universitat Autònoma de Barcelona}
+%\affil[3]{Applied Statistics Student -- Universitat Autònoma de Barcelona}
 
 \maketitle
 \thispagestyle{empty}
@@ -192,7 +195,7 @@ Per tant, cadascun d'aquests registres representa, de les 3196 posicions de part
 
 
 La \emph{variable classe} serà \textbf{target}, i com ja s'ha esmentat, pren els valors ``win'' i ``nowin'.
-Cal esmentar, que la distribució que pren aquesta variable \textsc{target} està força equilibrada, és a dir: en 1669 casos (52\%) les blanques guanyen (valor ``win''), mentre que en 1527 casos (48\%) les blanques no guanyen (valor ``nowin'').
+Cal esmentar, que la distribució que pren aquesta variable \textbf{target} està força equilibrada, és a dir: en 1669 casos (52\%) les blanques guanyen (valor ``win''), mentre que en 1527 casos (48\%) les blanques no guanyen (valor ``nowin'').
 
 Per altra banda, a continuació, les \emph{variables atributs} s'exposen de manera detallada a partir d'un exemple (veure Figura \ref{fig:chss2}):
 
@@ -201,9 +204,9 @@ Per altra banda, a continuació, les \emph{variables atributs} s'exposen de mane
     \item[bknwy]El rei negre no molesta en cap moviment de la torre negra, és a dir, no està en el camí de la torre negra.
     \item[bkon8]El rei negre està a la fila 8 per ajudar a la torre negra.
     \item[bkona]El rei negre està a la columna A per ajudar a la torre negra.
-    \item[bkspr]El rei negre pot ajudar a la torre negre amb 1 moviment.
+    \item[bkspr]El rei negre pot defensar la torre negra. En la Figura \ref{fig:chss2} el rei negre ajuda a torre negre quan torre negre mou a a4.
     \item[bkxbq]El rei negre no està atacat de cap manera pel peó coronat.
-    \item[bkxcr]El rei negre pot atacar la cuadrícula crítica al voltant de b7.
+    \item[bkxcr]El rei negre pot atacar la casella crítica b7.
     \item[bkxwp]El rei negre pot atacar el peó blanc.
     \item[blxwp]Les peces negres ataquen al peó blanc (torre negre només pot en direcció x=-1, és a dir, cap a f7).
     \item[bxqsq]Una o més peces negres (és a dir, o el rei o la torre) controlen el quadrat de la coronació a8.
@@ -224,7 +227,7 @@ Per altra banda, a continuació, les \emph{variables atributs} s'exposen de mane
     \item[skach]Es pot fer 1 o més escacs al rei blanc per haver sacrificat el peó.
     \item[skewr]Hi ha una clavada potencial fent un atac doble: el peó blanc es corona i la torre negra mou a a4.
     \item[skrxp]La torre negra pot aconseguir un atac doble o el rei negre pot atacar el peó blanc.
-    \item[spcop]Hi ha una oposició especial entre dos reis.
+    \item[spcop]Hi ha una oposició especial entre dos reis. És a dir, entenem que no és la oposició estàndard (com la de la variable \textbf{\texttt{dsopp}})
     \item[stlmt]El rei blanc és ofegat, és a dir: no té jugades legals per realitzar i el rei no es troba en estat d'escac. La partida acaba en taules.
     \item[thrsk]Es fa escac a la descoberta (una peça que està interferint l'acció d'una segona, s'aparta del seu camí) fent un doble atac.
     \item[wkcti]El rei blanc no pot controlar el punt d'intersecció. En el cas de la Figura \ref{chss2}, el punt d'intersecció seria f4.
@@ -237,11 +240,11 @@ Per altra banda, a continuació, les \emph{variables atributs} s'exposen de mane
 \end{description}
 
 
-És a dir, l'\textbf{objectiu} és construir una Xarxa Bayesiana de manera que, donada unes posicions concretes on només tenim la torre i el rei negres i, el rei i el peó blancs (aquest últim està en la posició del tauler a7), poder estimar la probabilitat que les blanques puguin guanyar o no.
+És a dir, l'\textbf{objectiu} és construir una Xarxa Bayesiana de manera que, donada unes posicions concretes on només tenim la torre i el rei negres i, el rei i el peó blancs (aquest últim està en la posició del tauler a7), es pugui estimar la probabilitat que les blanques puguin guanyar o no.
 
-Com que aquesta Xarxa Bayesiana, es farà servir per classificar si guanyen o no les blanques, s'utilitzaran dos possibles classificadors bayesians: el \emph{Naive Bayes} i l'\emph{Augmented Naive Bayes}.
+Com que aquesta Xarxa Bayesiana, es farà servir per classificar si poden guanyar o no les blanques, s'utilitzaran dos possibles classificadors bayesians: el \emph{Naive Bayes} i l'\emph{Augmented Naive Bayes}.
 
-En definitiva, per poder assolir aquest objectiu: en primer lloc es farà un preprocessing de la base de dades, seguidament, es separarà la base de dades amb un conjunt d'entrenament i un de test. Amb el d'entrenament, es durà a terme el procediment de k-fold cross-validació per tal d'entrenar i validar tant el Naive Bayes com l'Augmented Naive Bayes (s'utilitzarà el paquet bnlearn per entrenar cadascuna de les xarxes). També, a partir de les mesures de comportament triarem aquell que sigui l'òptim. Per altra banda, amb la xarxa escollida i el conjunt test farem una segona validació per acabar de constatar si la xarxa escollida funciona bé . I finalment, a partir de tota la base de dades, s'aprendrà el classificador bayesià escollit, per a fer la predicció de la classe de nous casos i predigui la classe d'alguns casos que ens han semblat interessants (mitjançant el paquet gRain).
+En definitiva, per poder assolir aquest objectiu: en primer lloc es farà un preprocessing de la base de dades, seguidament, es separarà la base de dades amb un conjunt d'entrenament i un de test. Amb el d'entrenament, es durà a terme el procediment de k-fold cross-validació per tal d'entrenar i validar tant el Naive Bayes com l'Augmented Naive Bayes (s'utilitzarà el paquet \texttt{bnlearn} per entrenar cadascuna de les xarxes). També, a partir de les mesures de comportament triarem aquell que sigui l'òptim. Per altra banda, amb la xarxa escollida i el conjunt test farem una segona validació per acabar de constatar si la xarxa escollida funciona bé. I finalment, a partir de tota la base de dades, s'aprendrà el classificador bayesià escollit, per a fer la predicció de la classe de nous casos i predigui la classe d'alguns casos que ens han semblat interessants (mitjançant el paquet \texttt{gRain}).
 
 
 %%%%%%%%%%%%%%%
@@ -254,11 +257,11 @@ En definitiva, per poder assolir aquest objectiu: en primer lloc es farà un pre
 
 En aquest apartat, com ja s'ha explicat anteriorment, s'explicaran i s'ensenyaran els pasos que s'han seguit per assolir l'objectiu proposat. Els enumerem a continuació:
 
-El primer pas, és el \textbf{preprocessament de les dades} on es selecciona les variables, mitjançant l'algoritme Stepwise, per posteriorment aprendre les xarxes. I també es separa la base de dades en un conjunt d'entrenament i un de test, on aquest últim s'utilitzarà per acabar de constatar si el classificador bayesià escollit funciona bé.
+El primer pas, és el \textbf{preprocessament de les dades} on es seleccionen les variables, mitjançant l'algoritme Stepwise, per posteriorment aprendre les xarxes. I també es separa la base de dades en un conjunt d'entrenament i un de test, on aquest últim s'utilitzarà per acabar de constatar si el classificador Bayesià escollit funciona bé.
 
 Seguidament, amb el conjunt d'entrenament, es fa el \textbf{procés d'aprenentatge i validació}, mitjançant k-fold cross validation, tant pel classificador Naive Bayes com per l'Augmented Naive Bayes. I també la seva comparativa amb la mesura de comportament \emph{Accuracy}.
 
-Tanmateix, per acabar de constatar si el classificador bayesià escollit funciona bé, es tornarà a fer la validació amb el conjunt de test.
+Tanmateix, per acabar de constatar si el classificador Bayesià escollit funciona bé, es tornarà a fer la validació amb el conjunt de test.
 
 Finalment, farem la construcció final del model amb tota la base de dades per fer la seva predicció de nous casos i aquells que s'han considerat interessants.
 
@@ -312,16 +315,15 @@ latex.table.fac(dades[(ceiling(ncol(dades)/2)+1):ncol(dades)], table="longtable"
   \label{tab:freqs}
 \end{table}
 
-Cal destacar que la variable \textit{spcop} obté una distribució de les dades molt anòmala ja que només existeix un cas on aquesta variable prén el valor \texttt{TRUE}. D'aquesta manera, es tindrà en compte alhora de triar les variables que s'utilitzin per entrenar les xarxes.
+Cal destacar que la variable \textbf{spcop} obté una distribució de les dades molt anòmala ja que només existeix un cas on aquesta variable prén el valor \texttt{TRUE}. D'aquesta manera, es tindrà en compte alhora de triar les variables que s'utilitzin per entrenar les xarxes.
 
 A més a més, es pot veure que cap de les variables conté valors perduts, i per tant, és un fet destacable i que també s'ha de tenir en compte quan s'aprenen les xarxes.
 
-Pel que fa al preprocessament de les dades, primerament s'ajusta un model de regressió logística amb la funció \texttt{glm} (veure Taula \ref{tab:glm}), ja que la variable classe del dataset és dicotòmica (0-blanques perden, 1-blanques guanyen).
+Pel que fa al preprocessament de les dades, primerament s'ajusta un model de regressió logística amb la funció \texttt{glm} (veure Taula \ref{tab:glm}), ja que la variable classe del dataset és dicotòmica (0-blanques no poden guanyar, 1-blanques poden guanyar).
 
-<<preprocessing, results="asis">>=
-#### Preprocessing de les dades: ####
+
+<<>>=
 model <- glm(target ~ ., data = dades, family = "binomial")
-print(xtable::xtable(model, caption="Model de regressió logística ajustat amb \texttt{glm}", label="tab:glm"), table.placement="H")
 @
 
 
@@ -484,14 +486,15 @@ Bayes_clasificator <- function(dades, wl, bl, k, seed){
 \subsection{\textit{Naive Bayes classifier}}
 \label{sec:naivebayes}
 
-En aquest apartat i a partir del conjunt d'entrenament es durà a terme l'aprenentatge de l'estructura i dels paràmetres del classificador Naive Bayes així com la seva validació, mitjançant el procediment de k-fold cross-validation amb $k=10$.
+En aquest apartat i a partir del conjunt d'entrenament es durà a terme l'aprenentatge de l'estructura i dels paràmetres del classificador Naive Bayes així com la seva validació, mitjançant el procediment de k-fold cross-validació amb $k=10$.
 
-És a dir, aquest conjunt d'entrenament es separarà en 10 parts proporcionals, que tindràn aproximadament el mateix nombre de casos. Llavors es començarà un procés iteratiu on repetirà 10 vegades el següent: s'aprendrà tant l'estructura com els paràmetres del classificador a partir del conjunt d'entrenament format per 9 trossos i pel tros restant, es farà la validació, és a dir, per cada cas d'aquest s'entren els inputs al classificador entrenat i fem la predicció per l'output.
+És a dir, aquest conjunt d'entrenament es separarà en 10 parts proporcionals, que tindràn aproximadament el mateix nombre de casos. Llavors es començarà un procés iteratiu on es  repetirà 10 vegades el següent: s'aprendrà tant l'estructura com els paràmetres del classificador a partir del conjunt d'entrenament format per 9 trossos. Pel tros restant, es farà la validació, és a dir, per cada cas d'aquest s'entren els inputs al classificador entrenat i fem la predicció per l'output.
 Llavors per a cada iteració del procés, s'anirà canviant el tros del conjunt de test per a fer la corresponent validació.
 
-A partir d'això podrem aconseguir la matriu de confusió i calcular les mesures de comportament corresponents per cadascuna de les iteracions.
+A partir d'això podrem aconseguir la matriu de confusió i calcular les mesures de comportament corresponents per cadascuna de les iteracions. 
 
-A continuació s'explica en més detall en què consisteix l'aprenentatge de l'estructura i dels paràmetres així com de la seva validació que es desenvolupa a cada iteració. També es mostrarà quines són les mesures de comportament que s'obtenen.
+A continuació s'explica amb més detall en què consisteix l'aprenentatge de l'estructura i dels paràmetres així com de la seva validació que es desenvolupa a cada iteració. També es mostrarà quines són les mesures de comportament que s'obtenen.
+
 
 %%%%%%%%%%%%%%%
 %%%
@@ -501,9 +504,9 @@ A continuació s'explica en més detall en què consisteix l'aprenentatge de l'e
 \subsubsection{Aprenentatge d'estructura}
 \label{sec:structure}
 
-Com ja s'ha esmentat, s'ha fet l'aprenentatge de l'estructura de la xarxa mitjançant el mètode heurístic de \textit{Search-and-score}. Aquest mètode utilitza una funció de puntuació i l'algoritme intenta trobar l'estructura que la maximitzi, per això farem servir la funció \texttt{hc} de la llibreria \textbf{\texttt{bnlearn}}. En aquest cas, el nostre dataset conté només dades completes, com bé hem dit abans.
+Com ja s'ha esmentat, s'ha fet l'aprenentatge de l'estructura de la xarxa mitjançant el mètode heurístic de \textit{Search-and-score}. Aquest mètode utilitza una funció de puntuació i l'algoritme intenta trobar l'estructura que la maximitzi, per això farem servir la funció \texttt{hc} de la llibreria \texttt{bnlearn}. En aquest cas, el nostre dataset conté només dades completes, com bé hem dit abans.
 
-Com volem que el classificador bayesià sigui un Naive Bayes, introduïrem una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) cap a tota la resta de variables explicatives, i una \textit{black list} per evitar que les variables explicatives tinguin fletxes entre elles.
+Com volem que el classificador bayesià sigui un Naive Bayes, introduïrem una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) fins a tota la resta de variables explicatives, i una \textit{black list} per evitar que les variables explicatives tinguin fletxes entre elles.
 
 
 %%%%%%%%%%%%%%%
@@ -516,6 +519,7 @@ Com volem que el classificador bayesià sigui un Naive Bayes, introduïrem una \
 
 Un cop ja tenim l'estructura del classificador, s'ha estimat els paràmetres, és a dir, les probabilitats de cada node condicionat al seu pare per a cada iteració.
 
+
 %%%%%%%%%%%%%%%
 %%%
 %%% Subsubsection: Validació
@@ -524,11 +528,11 @@ Un cop ja tenim l'estructura del classificador, s'ha estimat els paràmetres, é
 \subsubsection{Validació}
 \label{sec:validacio}
 
-L'últim pas és fer que el classificador bayesià que hem aprés a cadascuna de les iteracions, predigui per a cada cas de cadascun dels folds destinats a la validació, la probabilitat que assigni si les peces blanques guanyaran o no.
+L'últim pas és fer que el classificador bayesià que hem aprés a cadascuna de les iteracions, predigui per a cada cas de cadascun dels folds destinats a la validació, la probabilitat que assigni si les peces blanques podran guanyar o no.
 
 D'aquesta manera, s'obté la matriu de confusió de cada iteració, així com les mesures de comportament calculades, com es pot visualitzar a continuació:
 
-<<structure, results='hide'>>=
+<<structure, results='hide', cache=TRUE>>=
 atributes <- colnames(dades[-ncol(dades)])
 wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
 bl <- rbind(
@@ -554,7 +558,7 @@ print(xtable(Naive$Metrics, caption="Mesures de comportament per cada fold del c
 \subsection{\textit{Augmented Naive Bayes classifier}}
 \label{sec:augmented_naivebayes}
 
-Tal com s'ha realitzat el classificador de Naive Bayes, s'han seguit els mateixos passos per a realitzar l'aprenentatge i la validació per l'Augmented Naive Bayes. En aquest cas, l'única cosa que varia, és com es defineix l'aprenentatge de l'estructura per a cada iteració, com s'exposarà al següent apartat.
+Tal com s'ha realitzat el classificador de Naive Bayes, s'han seguit els mateixos passos per a realitzar l'aprenentatge i la validació per l'Augmented Naive Bayes. En aquest cas, l'única cosa que varia és com es defineix l'aprenentatge de l'estructura per a cada iteració, com s'exposarà al següent apartat.
 
 
 %%%%%%%%%%%%%%%
@@ -565,7 +569,7 @@ Tal com s'ha realitzat el classificador de Naive Bayes, s'han seguit els mateixo
 \subsubsection{Aprenentatge d'estructura}
 \label{sec:augmented_structure}
 
-Quan volem que el classificador bayesià sigui un Augmented Naive Bayes, introduïm una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) cap a tota la resta de variables explicatives, però en aquest cas no afegim una \textit{black list} perquè no ens cal evitar que les variables explicatives tinguin fletxes entre elles.
+Quan volem que el classificador bayesià sigui un Augmented Naive Bayes, introduïm una \textit{white list} perquè ens interessa que els arcs vagin des de la variable classe (\textbf{target}) fins a tota la resta de variables explicatives, però en aquest cas no afegim una \textit{black list} perquè no ens cal evitar que les variables explicatives tinguin fletxes entre elles.
 
 
 %%%%%%%%%%%%%%%
@@ -576,7 +580,8 @@ Quan volem que el classificador bayesià sigui un Augmented Naive Bayes, introdu
 \subsubsection{Aprenentatge de paràmetres}
 \label{sec:augmented_parameters}
 
-De manera similar a l'aprenentatge de paràmetres del Naive Bayes, s'ha estimat els paràmetres, és a dir, les probabilitats de cada node condicionat al seu pare per a cada iteració.
+De manera similar a l'aprenentatge de paràmetres del Naive Bayes, s'ha estimat els paràmetres, és a dir, les probabilitats de cada node condicionat al seus pares per a cada iteració.
+
 
 %%%%%%%%%%%%%%%
 %%%
@@ -586,11 +591,12 @@ De manera similar a l'aprenentatge de paràmetres del Naive Bayes, s'ha estimat 
 \subsubsection{Validació}
 \label{sec:augmented_validacio}
 
-Com ja s'ha explicat a la validació pel classificador del Naive Bayes, \ref{sec:validacio}, l'últim pas és fer que el classificador bayesià que hem aprés per cadascuna de les iteracions, predigui per cada cas de cadascun dels folds destinats a la validació, la probabilitat que assigni si les peces blanques guanyaran o no.
+Com ja s'ha explicat a la validació pel classificador del Naive Bayes, \ref{sec:validacio}, l'últim pas és fer que el classificador bayesià que hem aprés per cadascuna de les iteracions, predigui per cada cas de cadascun dels folds destinats a la validació, la probabilitat que assigni si les peces blanques podran guanyar o no.
 
 D'aquesta manera, s'obté la matriu de confusió de cada iteració, així com les mesures de comportament calculades, com es pot visualitzar a continuació:
 
-<<augmented_structure, results='hide'>>=
+
+<<augmented_structure, results='hide', cache=TRUE>>=
 atributes <- colnames(dades[-ncol(dades)])
 wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
 
@@ -598,6 +604,7 @@ Augmented <- Bayes_clasificator(training, wl, bl = NULL, 10, 666)
 
 Augmented$Metrics
 @
+
 
 <<mesures_augmented, results='asis'>>=
 print(xtable(Augmented$Metrics, caption="Mesures de comportament per cada fold del classificador Augmented Naive Bayes", label="tab:augmented"),size="\\fontsize{7pt}{8pt}\\selectfont", table.placement="H")
@@ -609,50 +616,57 @@ print(xtable(Augmented$Metrics, caption="Mesures de comportament per cada fold d
 %%% Subsection: Tria del clasificador bayesià final
 %%%
 %%%%%%%%%%%%%%%
-\subsection{\textit{Tria del clasificador bayesià final}}
+\subsection{Tria del clasificador bayesià final}
 \label{sec:tria_clasificador}
 
-Una vegada ja tenim el dos clasificadors bayesians "Naive Bayes" i "Augmented Naive Bayes" hem de triar quina de les dues xarxes modelitza millor les nostres dades d'escacs, i aixó ho podem fer a partir de les mesures de bondat d'ajust de cadascuna de les xarxes.
+Una vegada ja tenim el dos clasificadors bayesians Naive Bayes i Augmented Naive Bayes, hem de triar quina de les dues xarxes modelitza millor les nostres dades d'escacs, i aixó ho podem fer a partir de les mesures de bondat d'ajust de cadascuna de les xarxes.
 
-Com que amb el procés de validació de cada xarxa, s'ha aconseguit una mostra de la mesura Accuracy,s'ha mirat si aquestes dues mostres segueixen una distribució de normalitat, a través del test de Shapiro Wilk. Aquest considera a la hipòtesi nul·la que la mostra en qüestió segueix la distribució normal.
-
-S'ha vist que efectivament, els dos p-valors són majors a 0.05 (respectivament són tal i tal), i per tant, no tenim evidències per rebutjar aquesta hipòtesi de normalitat a les dues mostres.
-
-D'aquesta manera, s'ha desenvolupat un t-test de mostres aparellades, per veure si les mitjanes de les accuracies per cada fold del Naive Bayes i Augmented Naive Bayes es poden considerar diferents. Aquest test considera com a hipòtesi nul·la que les mitjanes de les dues mostres són iguals. No obstant, el p-valor ha resultat ser menor a 0.001 i per tant, tenim evidències per rebutjar aquesta hipòtesi nul·la i considerar que les mitjanes de les accuracies són diferents.
-
-Com es pot observar, a la taula següent, la mitjana de l'Accuracy del Augmented Naive Bayes és major al del Naive Bayes. Per tant, el model escollit serà l'Augmented Naive Bayes.
+Com que amb el procés de validació de cada xarxa, s'ha aconseguit una mostra de la mesura Accuracy, s'ha mirat si aquestes dues mostres segueixen una distribució de normalitat, a través del test de Shapiro Wilk. Aquest considera com a hipòtesi nul·la que la mostra en qüestió segueix la distribució normal.
 
 <<tria, results="hide">>=
 normalitat.naive <- shapiro.test(Naive$Metrics["Accuracy",])$p.value
 normalitat.augmented <- shapiro.test(Augmented$Metrics["Accuracy",])$p.value
 
-ttest <- t.test(Naive$Metrics["Accuracy",], Augmented$Metrics["Accuracy",], paired = TRUE, alternative = "two.sided")$p.value
+ttest <- t.test(Naive$Metrics["Accuracy",], Augmented$Metrics["Accuracy",],
+                paired = TRUE, alternative = "two.sided")$p.value
 
 Mesures <- cbind(Naive$Metrics_mean, Augmented$Metrics_mean)
 colnames(Mesures) <- c("Naive Bayes", "Augmented Naive Bayes")
 
-xtable(Mesures)
+xtable(Mesures, table.placement="H")
 @
+
+S'ha vist que efectivament, els dos p-valors són majors a 0.05 (respectivament són \Sexpr{round(normalitat.naive, 3)} i \Sexpr{round(normalitat.augmented, 3)}), i per tant, no tenim evidències per rebutjar aquesta hipòtesi de normalitat a les dues mostres.
+
+D'aquesta manera, s'ha desenvolupat un t-test de mostres aparellades, per veure si les mitjanes de les accuracies per cada fold del Naive Bayes i Augmented Naive Bayes es poden considerar diferents. Aquest test considera com a hipòtesi nul·la que les mitjanes de les dues mostres són iguals. No obstant, el p-valor ha resultat ser menor a 0.001 i, per tant, tenim evidències per rebutjar aquesta hipòtesi nul·la i considerar que les mitjanes de les accuracies són diferents.
+
+Com es pot observar, a la taula següent, la mitjana de l'Accuracy del Augmented Naive Bayes és major al del Naive Bayes. Per tant, el model escollit serà l'Augmented Naive Bayes.
+
 
 <<mesures_globals, results='asis'>>=
 print(xtable(Mesures, caption="Mitjanes de les mesures de comportament del classificador Naive Bayes i Augmented Naive Bayes", label="tab:mesures_globals"), table.placement="H")
 @
 
-Així doncs, podem veure que totes les altres mesures (TPR, TNR, PPV, F1) que hem calculat per saber com de bé s'estima les xarxes bayesianes, les del Augmented Naive Bayes són més elevades (>95\%) que les del Naive Bayes.
+
+Així doncs, podem veure que totes les altres mesures (\textit{True Positive Rate}, \textit{True Negative Rate}, \textit{Positive Predictive Value}, \textit{F1 score}) que hem calculat per saber com de bé s'estima les xarxes bayesianes, les del Augmented Naive Bayes són més elevades (>95\%) que les del Naive Bayes.
 
 
 %%%%%%%%%%%%%%%
-%%%
-%%% Subsubsection: Aprenentatge al conjunt d'entrenament i el de validació al conjunt test del classificador escollit
+%%% 
+%%% Subsubsection: Aprenentatge i validació pel conjunt test del classificador escollit 
 %%%
 %%%%%%%%%%%%%%%
-\subsubsection{Aprenentatge al conjunt d'entrenament i el de validació al conjunt test del classificador escollit}
+\subsubsection{Aprenentatge i validació pel conjunt test del classificador escollit}
 \label{sec:augmented_structure_final}
 
-Finalment el classificador escollit és l'Augmented Naive Bayes i, en aquest cas, tornarem a fer l'aprentatge de l'estructura, considerant una \textit{white list} que forçi tot els arcs de la variable classe (\textbf{target}) cap a la resta de variables, però sense una \textit{black list} per a que el model pugui crear arcs entre les variables explicatives. També farem l'aprenentage dels paràmetres i ambdós es faran a partir del conjunt d'entrenament. Un cop fet aquests aprenentatge, es fa la validació sobre el conjunt tests. Aquestes són les mesures de comportament obtingudes (veure Taula \ref{tab:mesures_test}).
+Finalment el classificador escollit és l'Augmented Naive Bayes i, en aquest cas, tornarem a fer l'aprenentatge de l'estructura, considerant una \textit{white list} que forçi tot els arcs de la variable classe (\textbf{target}) fins a la resta de variables, però sense una \textit{black list} per a que el model pugui crear arcs entre les variables explicatives. També farem l'aprenentage dels paràmetres i ambdós es faran a partir del conjunt d'entrenament. Un cop fet aquests aprenentatge, es fa la validació sobre el conjunt tests. Les mesures de comportament obtingudes es poden veure a la Taula \ref{tab:mesures_test}.
 
 
 <<final_parameters, results="hide">>=
+atributes <- colnames(dades[-ncol(dades)])
+wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
+
+xarxa <- hc(training, score = "bic", whitelist = wl)
 xarxa.estimada <- bn.fit(xarxa, training, method = "mle")
 xarxa.grain <- suppressWarnings(as.grain(xarxa.estimada))
 
@@ -661,8 +675,8 @@ CL <- NULL
 prueba <- NULL
 distribucio <- NULL
 
-for (j in 1:nrow(test)){
-  if (is.numeric(predict(xarxa.grain, response="target",
+for(j in 1:nrow(test)){
+  if(is.numeric(predict(xarxa.grain, response = "target",
                          test[j,], predictors = atributes,
                          type = "dist")$pred[[1]][1,1])==FALSE){
     prediccio[[j]] <- NA
@@ -720,7 +734,6 @@ colnames(Mesures) <- "Mètriques"
 Mesures
 
 xtable(Mesures)
-#
 @
 
 
@@ -729,136 +742,130 @@ print(xtable(Mesures, caption = "Mesures de comportament del classificador Augme
 @
 
 
-Observem, finalment, que el classificador Augmented Naive Bayes obté unes mètriques molt bones (>94\%). Podem veure la seva corresponent estructura generada amb la funció \texttt{graphviz.plot} a la Figura \ref{fig:augmented_nb}.
-
-
-\begin{figure}[ht!]
-     \begin{center}
-<<final_structure, results="hide">>=
-atributes <- colnames(dades[-ncol(dades)])
-wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
-xarxa <- hc(training, score = "bic", whitelist = wl)
-graphviz.plot(xarxa)
-@
-     \caption{Graf del classificador Augmented Naive Bayes amb l'aprenentatge sobre el conjunt d'entrenament i la validació sobre el de test}
-     \label{fig:augmented_nb}
-     \end{center}
-\end{figure}
-
-
-Al següent apartat ja podrem entrenar la nostra xarxa bayesiana final amb \textbf{totes} les dades fent servir un Augmented Naive Bayes, per després procedir a fer la validació.
+Observem, finalment, que el classificador Augmented Naive Bayes obté unes mètriques molt bones (>94\%). 
+Al següent apartat ja podrem entrenar la nostra xarxa Bayesiana final amb \textbf{totes} les dades fent servir un Augmented Naive Bayes, per després procedir a fer les prediccions. 
 
 
 %%%%%%%%%%%%%%%%
 %%%
-%%% Section: Aprenentage i predicció per a noves partides amb el classificador escollit
+%%% Section: Aprenentage i predicció per a noves partides amb el classificador final
 %%%
 %%%%%%%%%%%%%%%%
-\section{Aprenentage i predicció per a noves partides amb el classificador escollit}
+\section{Aprenentage i predicció per a noves partides amb el classificador final}
 \label{sec:prediccions}
 
 
-\begin{figure}[ht!]
-     \begin{center}
-<<final, results="hide">>=
+Un cop s'ha après l'estructura i els paràmetres del classificador Augmented Naive Bayes a partir de tota la base de dades, ja estem preparats per poder simular noves partides d'escacs on es doni aquesta situació de final de partida on les peces blanques tenen el rei i un peó, mentre que les negres tenen el rei i una torre. No obstant, com es tracta d'un Augmented Naive Bayes, tenint molts nodes i molts arcs entre aquests (veure Figura \ref{fig:augmented_nb}), la distribució de probabilitat conjunta no obtindrà probabilitats per totes i cadascuna de les possibles combinacions que es poden donar amb aquestes variables. Per tant, pot ser que les probabilitats de predicció no es puguin calcular. En aquests casos que hem considerat rellevant classificar, aplicarem la xarxa Bayesiana amb Naive Bayes, ja que aquest té la propietat de predir per a qualsevol nou cas. Podem veure la corresponent estructura de l'Augmented Naive Bayes i la del Naive Bayes generades amb la funció \texttt{graphviz.plot} a la Figura \ref{fig:augmented_nb} i \ref{fig:nb}, respectivament.
+
+
+<<naive_bayes>>=
 # - Introduim la white list:
 atributes <- colnames(dades[-ncol(dades)])
 wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
-xarxa <- hc(dades, score = "bic", whitelist = wl)
-graphviz.plot(xarxa)
-
-xarxa.estimada <- bn.fit(xarxa, dades, method = "mle")
-xarxa.grain <- suppressWarnings(as.grain(xarxa.estimada))
-@
-     \caption{Graf del classificador Augmented Naive Bayes amb l'aprenentatge sobre el conjunt d'entrenament i la validació sobre el de test ((crec que aquest no cal posar-lo perquè és fa igual que el d'abans, osigui les primeres 4 línies de codi les podríem eliminar directament))}
-     \label{fig:augmented_nb_final}
-     \end{center}
-\end{figure}
-
-
-Un cop s'ha après l'estructura i els paràmetres del classificador Augmented Naive Bayes a partir de tota la base de dades, ja estem preparats per poder simular noves partides d'escacs on es doni aquesta situació de final de partida on les peces blanques tenen el Rei i un Peó mentres que les negres tenen el Rei i un torre. Hem pensat tres propostes de partides d'escacs amb aqueste condicions i son les següents:
-
-
-\begin{figure}[ht!]
-     \begin{center}
-<<esther, results="hide">>=
-# https://www.apronus.com/chess/diagram/editor/
-# chss3 <- Chess$new("8/P4r2/8/K1k5/8/8/8/8 w - - 0 1")
-# plot(chss3)
-@
-     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp3.png}
-     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
-     \label{fig:chss3}
-     \end{center}
-\end{figure}
-
-\begin{figure}[ht!]
-     \begin{center}
-<<oscar, results="hide">>=
-# https://www.apronus.com/chess/diagram/editor/
-# chss4 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
-# plot(chss4)
-@
-     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp2.png}
-     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
-     \label{fig:chss4}
-     \end{center}
-\end{figure}
-
-\begin{figure}[ht!]
-     \begin{center}
-<<anna, results="hide">>=
-# https://www.apronus.com/chess/diagram/editor/
-# chss5 <- Chess$new("8/P7/8/2k5/2r5/8/K7/8 w - - 0 1")
-# plot(chss5)
-@
-     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp2.png}
-     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs.}
-     \label{fig:chss5}
-     \end{center}
-\end{figure}
-
-<<predictions, eval=F>>=
-a <- lapply(dades, function(x) sample(levels(x),1))
-a <- unlist(a[-c(length(a))])
-
-a <- dades[sample(1:nrow(dades),1),]
-a <- a[-c(length(a))]
-
-a <- c(TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
-       "g",FALSE,"n",TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,
-       TRUE,TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,TRUE,TRUE,"n")
-
-a <- c(TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,T,FALSE,FALSE,FALSE,FALSE,FALSE,
-       "g",FALSE,"n",TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,TRUE,
-       TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,FALSE,FALSE,TRUE,TRUE,"t")
-
-a <- c(FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
-       "l",FALSE,"n",FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
-       TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,"n")
-
-a <- c(F, T, F, F, F, T, T, F, T, F, T, T, "g", F, "n", F, F, F, F, F, F, T, F, F, T, F, F, T, F, F, T, F, F, F, T, F, "n")
-a <- A[-c(5,13,19,24,26,28,29,36)]
-
-atributes <- colnames(dades)
-
-
-xarxa.evid <- setEvidence(xarxa.grain, nodes=atributes, states=a)
-evid <- xarxa.evid$evidence
-qq <- querygrain(xarxa.evid, nodes = c("target"), type="marginal")
-distribucio <- qq$target
-prediccio <- dimnames(distribucio)[[1]][which.max(distribucio)]
-CL <- round(100*max(distribucio), 2)
-reincidence.risc <- round(100*distribucio[2], 2)
-
-Resultat <- matrix(c(prediccio, CL,reincidence.risc), nrow=1)
-Resultat <- as.data.frame(Resultat)
-colnames(Resultat) <- c("Predicció","Confidence Level (CL) en %",
-                        "Risc de reincidència")
-evid
-Resultat
+xarxa.augmented <- hc(dades, score = "bic", whitelist = wl)
 @
 
+
+<<augmented_naive_bayes>>=
+# - Introduim la white list:
+wl <- data.frame(from = rep("target", length(atributes)), to = atributes)
+bl <- rbind(
+  expand.grid(atributes, atributes),
+  data.frame(Var1 = atributes, Var2= rep("target", length(atributes))),
+  data.frame(Var1 = "target", Var2= "target")
+)
+
+xarxa.naive <- hc(dades, score = "bic", whitelist = wl, blacklist = bl)
+@
+
+
+Amb el Naive Bayes predirem dues propostes de partides d'escacs, que es poden veure representades a les Figures \ref{fig:chss3} i \ref{fig:chss4} i les seves corresponents prediccions estan a la Taula \ref{tab:chss3_pred}.
+
+
+<<predictions_naive>>=
+# - Introduïm els nous casos de finals de partides d'escacs
+naiv1 <- c(F,T,F,F,F,T,T,F,T,F,T,T,"g",F,"b",F,F,F,F,F,F,T,F,F,T,F,F,T,F,F,T,F,F,F,T,F,"n")
+naiv1 <- naiv1[-c(5,13,19,24,26,28,29,36,37)]
+naiv2 <- c(T,T,F,F,F,T,T,T,T,F,F,F,"n",T,F,F,F,F,F,F,T,T,F,F,F,F,F,T)
+
+# - Introduim la white list i la black list, aprenem la xarxa Bayesiana Naive amb totes les dades:
+xarxa.estimada.naive <- bn.fit(xarxa.naive, dades, method = "mle")
+xarxa.grain.naive <- suppressWarnings(as.grain(xarxa.estimada.naive))
+
+naiv_predictions <- function(var){
+  xarxa.evid <- setEvidence(xarxa.grain.naive, nodes=atributes, states=var)
+  evid <- xarxa.evid$evidence
+  qq <- querygrain(xarxa.evid, nodes=c("target"), type="marginal")
+  distribucio <- qq$target
+  prediccio <- dimnames(distribucio)[[1]][which.max(distribucio)]
+  CL <- round(100*max(distribucio), 2)
+  reincidence.risc <- round(100*distribucio[2], 2)
+  
+  Resultat <- matrix(c(prediccio, CL, reincidence.risc), nrow=1)
+  Resultat <- as.data.frame(Resultat)
+  colnames(Resultat) <- c("Predicció",
+                          "Confidence Level (CL) en %",
+                          "Risc de reincidència")
+  return(list("Evidències"=evid, "Resultat"=Resultat))
+}
+
+naiv_predictions(naiv1)
+naiv_predictions(naiv2)
+@
+
+
+<<results="asis">>=
+xtable(rbind("Jugada nova 1"=naiv_predictions(naiv1)$Resultat, 
+             "Jugada nova 2"=naiv_predictions(naiv2)$Resultat),
+       caption="Predicció de dos jugades noves amb el Naives Bayes entrenat",
+       label="tab:chss3_pred",
+       table.placement="H")
+@
+
+
+Amb l'Augmented Naive Bayes també predim dos finals de partides, i les seves corresponents prediccions estan a la Taula \ref{tab:chss4_pred}.
+
+
+<<predictions_augmented>>=
+# AUGMENTED NAIVE BAYES
+aug1 <- c(F,F,F,F,F,F,F,F,T,F,T,F,"l",F,"w",F,F,T,F,F,F,T,F,F,F,T,F,F,F,F,F,F,F,T,F,"n","won")
+aug1 <- aug1[-c(5,13,19,24,26,28,29,36,37)]
+
+aug2 <- c(F,F,F,F,F,F,T,F,F,F,T,F,"l",F,"b",F,F,T,F,F,F,F,F,F,F,T,F,F,F,F,F,F,F,T,T,"n","nowin")
+aug2 <- aug2[-c(5,13,19,24,26,28,29,36,37)]
+
+xarxa.estimada.augmented <- bn.fit(xarxa.augmented, dades, method = "mle")
+xarxa.grain.augmented <- suppressWarnings(as.grain(xarxa.estimada.augmented))
+
+aug_predictions <- function(var){
+  xarxa.evid <- setEvidence(xarxa.grain.augmented, nodes=atributes, states=var)
+  evid <- xarxa.evid$evidence
+  qq <- querygrain(xarxa.evid, nodes=c("target"), type="marginal")
+  distribucio <- qq$target
+  prediccio <- dimnames(distribucio)[[1]][which.max(distribucio)]
+  CL <- round(100*max(distribucio), 2)
+  reincidence.risc <- round(100*distribucio[2], 2)
+  
+  Resultat <- matrix(c(prediccio, CL,reincidence.risc), nrow=1)
+  Resultat <- as.data.frame(Resultat)
+  colnames(Resultat) <- c("Predicció",
+                          "Confidence Level (CL) en %",
+                          "Risc de reincidència")
+  return(list("Evidències"=evid, "Resultat"=Resultat))
+}
+
+aug_predictions(aug1)
+aug_predictions(aug2)
+@
+
+
+<<results="asis">>=
+xtable(rbind("Jugada nova 1"=aug_predictions(aug1)$Resultat, 
+             "Jugada nova 2"=aug_predictions(aug2)$Resultat),
+       caption="Predicció de dos jugades noves amb l'Augmented Naives Bayes entrenat",
+       label="tab:chss4_pred",
+       table.placement="H")
+@
 
 
 %%%%%%%%%%%%%%%
@@ -866,6 +873,8 @@ Resultat
 %%% References
 %%%
 %%%%%%%%%%%%%%%
+\clearpage
+
 \begin{thebibliography}{99}
    \bibitem{rchess} rchess \textit{A Chess package for \R.} \url{http://jkunst.com/rchess/} [Online; visitat el 27 de març de 2021]
    \bibitem{chess} chess \textit{Definition of chess.} \url{https://www.merriam-webster.com/dictionary/chess} [Online; visitat el 27 de març de 2021]
@@ -878,6 +887,7 @@ Resultat
 \end{thebibliography}
 
 
+
 %%%%%%%%%%%%%%%
 %%%
 %%% Appendix
@@ -885,47 +895,65 @@ Resultat
 %%%%%%%%%%%%%%%
 \clearpage
 \appendix
-\section{\R code}
+\section{Annex}
 \label{app:Rcode}
 
-\subsection{Preprocessament de les dades}
 
-<<echo=TRUE, eval=FALSE>>=
-<<data>>
-<<preprocessing>>
-<<preprocessing2>>
+<<preprocessing, results="asis">>=
+#### Preprocessing de les dades: ####
+print(xtable::xtable(model, caption="Model de regressió logística ajustat amb \texttt{glm}", label="tab:glm"), table.placement="H")
 @
 
-\subsection{\textit{Naive Bayes classifier}}
 
-<<echo=TRUE, eval=FALSE>>=
-<<structure>>
-<<parameters>>
-<<classification>>
+\begin{figure}[ht!]
+     \begin{center}
+<<chss3, results="hide">>=
+# https://www.apronus.com/chess/diagram/editor/
+# chss3 <- Chess$new("8/P4r2/8/K1k5/8/8/8/8 w - - 0 1")
+# plot(chss3)
 @
+     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp3.png}
+     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs. Jugada nova 1.}
+     \label{fig:chss3}
+     \end{center}
+\end{figure}
 
-\subsection{\textit{Augmented Naive Bayes classifier}}
 
-<<echo=TRUE, eval=FALSE>>=
-<<augmented_structure>>
-<<augmented_parameters>>
-<<augmented_classification>>
+\begin{figure}[ht!]
+     \begin{center}
+<<chss4, results="hide">>=
+# https://www.apronus.com/chess/diagram/editor/
+# chss4 <- Chess$new("8/Pk6/8/2r5/8/K7/8/8 w - - 0 1")
+# plot(chss4)
 @
+     \includegraphics[width=0.5\textwidth]{fotos/kr-vs-kp4.png}
+     \caption{Diagrama d'escacs. Torre i rei negres contra rei i peó blancs. Jugada nova 2.}
+     \label{fig:chss4}
+     \end{center}
+\end{figure}
 
-\subsection{\textit{Triatge del clasificador bayesiá final}}
 
-<<echo=TRUE, eval=FALSE>>=
-<<triatge>>
-<<final_structure>>
-<<final_parameters>>
-<<final_classification>>
+
+\begin{figure}[ht!]
+     \begin{center}
+<<augmented_naive_bayes2, results="hide">>=
+graphviz.plot(xarxa.augmented)
 @
+     \caption{Graf del classificador Augmented Naive Bayes final}
+     \label{fig:augmented_nb}
+     \end{center}
+\end{figure}
 
-\subsection{\textit{Predicció per noves partides}}
 
-<<echo=TRUE, eval=FALSE>>=
-<<predictions>>
+\begin{figure}[ht!]
+     \begin{center}
+<<naive_bayes2, results="hide">>=
+graphviz.plot(xarxa.naive)
 @
+     \caption{Graf del classificador Naive Bayes final}
+     \label{fig:nb}
+     \end{center}
+\end{figure}
 
 
 
