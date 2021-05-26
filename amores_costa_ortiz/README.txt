@@ -1,4 +1,4 @@
-Aquest fitxer .zip conté 4arxius: 
+Aquest fitxer .zip conté 4 arxius: 
 - chess.pdf -> Informe amb els resultats
 - chess.R -> Script d'R
 - kr-vs-kp.data -> Base de dades
